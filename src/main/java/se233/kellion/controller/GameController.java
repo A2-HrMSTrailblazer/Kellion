@@ -6,15 +6,15 @@ import se233.kellion.view.GameView;
 import se233.kellion.model.Player;
 
 public class GameController {
-    private GameView view;
-    private Player player;
+    private final GameView view;
+    private final Player player;
     private boolean left, right;
 
     public GameController(GameView view) {
         this.view = view;
         this.player = view.getPlayer();
 
-        // Attach input once Scene is available
+        // Attach input when the Scene becomes available
         view.getRoot().sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 initInput(newScene);
@@ -25,14 +25,17 @@ public class GameController {
     private void initInput(Scene scene) {
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
-                case LEFT -> left = true;
-                case RIGHT -> right = true;
+                case LEFT, A -> left = true;
+                case RIGHT, D -> right = true;
+                //case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
             }
         });
+
         scene.setOnKeyReleased(e -> {
             switch (e.getCode()) {
-                case LEFT -> left = false;
-                case RIGHT -> right = false;
+                case LEFT, A -> left = false;
+                case RIGHT, D -> right = false;
+                //case W, UP, SPACE -> player.stopJumping();
             }
         });
     }
@@ -48,7 +51,16 @@ public class GameController {
     }
 
     private void update() {
-        if (left) player.moveLeft();
-        if (right) player.moveRight();
+        // player.update();
+
+        //if (!player.isJumping()) {
+            if (left) {
+                player.moveLeft();
+            } else if (right) {
+                player.moveRight();
+            } else {
+                player.stopMoving();
+            }
+        //}
     }
 }

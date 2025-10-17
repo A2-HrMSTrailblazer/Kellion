@@ -18,6 +18,7 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
+        gameView.getRoot().requestFocus();
         controller.startGameLoop(); // begins the animation
     }
 
