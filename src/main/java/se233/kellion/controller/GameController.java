@@ -27,7 +27,7 @@ public class GameController {
             switch (e.getCode()) {
                 case LEFT, A -> left = true;
                 case RIGHT, D -> right = true;
-                //case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
+                // case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
             }
         });
 
@@ -35,7 +35,7 @@ public class GameController {
             switch (e.getCode()) {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
-                //case W, UP, SPACE -> player.stopJumping();
+                // case W, UP, SPACE -> player.stopJumping();
             }
         });
     }
@@ -53,14 +53,14 @@ public class GameController {
     private void update() {
         // player.update();
 
-        //if (!player.isJumping()) {
-            if (left) {
-                player.moveLeft();
-            } else if (right) {
-                player.moveRight();
-            } else {
-                player.stopMoving();
-            }
-        //}
+        // if (!player.isJumping()) {
+        if (left) {
+            player.moveLeft();
+        } else if (right) {
+            player.moveRight();
+        } else {
+            player.stopMoving();
+        }
+        // }
     }
 }

@@ -30,7 +30,7 @@ public class Player {
     private double velocityY = 0;
     private final double gravity = 0.15;
     private final double jumpStrength = -7;
-    private final double groundY = 300;
+    private final double groundY = 600;
     // private int jumpCount = 0;
     private final double minY = 0;
 
