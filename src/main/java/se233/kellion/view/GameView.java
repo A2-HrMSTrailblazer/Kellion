@@ -5,6 +5,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import se233.kellion.model.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class GameView {
@@ -16,6 +19,9 @@ public class GameView {
     private static final int SKY_TILE_SIZE = 16;
     private static final int GRASS_HEIGHT = 16;
     private static final int SOIL_HEIGHT = 32;
+    private List<ImageView> bullets = new ArrayList<>();
+    private WritableImage bulletSprite;
+    private static final int BULLET_SPEED = 5;
 
     public GameView() {
         root = new Pane();
@@ -68,8 +74,37 @@ public class GameView {
         int playerY = groundY - 48; // adjust -48 to your player sprite height
         player = new Player(100, playerY, "/se233/kellion/assets/Player.png");
         root.getChildren().add(player.getView());
+
+        // Bullet sprite
+        Image characterSheet = new Image(getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
+        bulletSprite = new WritableImage(characterSheet.getPixelReader(), 287, 805, 8, 16);
+    }
+
+    // Fire bullet
+    public void fireBullet(double x, double y, boolean facingRight) {
+        ImageView bullet = new ImageView(bulletSprite);
+        bullet.setX(x);
+        bullet.setY(y);
+        bullet.setScaleX(facingRight ? 1 : -1);
+        root.getChildren().add(bullet);
+        bullets.add(bullet);
+    }
+
+    // bullet update
+    public void updateBullets() {
+        List<ImageView> toRemove = new ArrayList<>();
+        for (ImageView bullet : bullets) {
+            bullet.setX(bullet.getX() + (bullet.getScaleX() > 0 ? BULLET_SPEED : -BULLET_SPEED));
+            // Remove bullet if out of bounds
+            if (bullet.getX() < -20 || bullet.getX() > 820) {
+                toRemove.add(bullet);
+                root.getChildren().remove(bullet);
+            }
+        }
+        bullets.removeAll(toRemove);
     }
 
     public Pane getRoot() { return root; }
     public Player getPlayer() { return player; }
+    public List<ImageView> getBullets() { return bullets; }
 }

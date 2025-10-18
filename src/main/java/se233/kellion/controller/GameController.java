@@ -28,6 +28,11 @@ public class GameController {
                 case LEFT, A -> left = true;
                 case RIGHT, D -> right = true;
                 // case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
+                case J -> {
+                    double px = player.getView().getX() + player.getView().getFitWidth() / 2;
+                    double py = player.getView().getY() + player.getView().getFitHeight() / 2;
+                    view.fireBullet(px, py, player.isFacingRight());
+                }
             }
         });
 
@@ -61,6 +66,8 @@ public class GameController {
         } else {
             player.stopMoving();
         }
+
+        view.updateBullets();
         // }
     }
 }

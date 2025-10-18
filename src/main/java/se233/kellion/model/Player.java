@@ -108,6 +108,10 @@ public class Player {
         view.setViewport(new Rectangle2D(WALK_OFFSET_X, WALK_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
     }
 
+    public boolean isFacingRight() {
+        return facingRight;
+    }
+
     // public void jump() {
     //     if (!isJumping && isGrounded()) {
     //         isJumping = true;
