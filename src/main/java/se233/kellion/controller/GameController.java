@@ -27,7 +27,7 @@ public class GameController {
             switch (e.getCode()) {
                 case LEFT, A -> left = true;
                 case RIGHT, D -> right = true;
-                // case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
+                case W, UP, SPACE -> player.jump();
                 case J -> {
                     // double px = player.getView().getX() + player.getView().getFitWidth() / 2;
                     // double py = player.getView().getY() + player.getView().getFitHeight() / 2;
@@ -60,7 +60,7 @@ public class GameController {
     }
 
     private void update() {
-        // player.update();
+        player.update();
 
         // if (!player.isJumping()) {
         if (left) {

@@ -9,39 +9,48 @@ import se233.kellion.util.SpriteAnimation;
 
 public class Player {
     private final ImageView view;
-    private final double speed = 2;
     private final SpriteAnimation walkAnimation;
     private final SpriteAnimation jumpAnimation;
     private final SpriteAnimation proneAnimation;
+
     private boolean facingRight = true;
     private boolean moving = false;
+    private boolean isJumping = false;
+    private boolean isProne = false;
 
-    // Sprite sheet constants (approximation)
+    // === Physics constants ===
+    private static final double SPEED = 2.0;
+    private static final double GRAVITY = 0.15;
+    private static final double JUMP_STRENGTH = -7.0;
+    private static final double GROUND_OFFSET = 20.0;
+
+    private final double groundY;
+    private double velocityY = 0;
+
+    // === Sprite sheet configuration ===
     private static final int FRAME_WIDTH = 64;
     private static final int FRAME_HEIGHT = 64;
     private static final int COLUMNS = 12;
-    private static final int WALK_FRAME_COUNT = 6; // number of frames used for walking
+
+    // Walking animation
+    private static final int WALK_FRAME_COUNT = 6;
     private static final int WALK_OFFSET_X = 6 * FRAME_WIDTH;
-    private static final int WALK_OFFSET_Y = 0; // 3rd row (0-indexed), since walking is near bottom
-    private static final int JUMP_FRAME_COUNT = 5; // number of frames used for jumping
+    private static final int WALK_OFFSET_Y = 0;
+
+    // Jumping animation
+    private static final int JUMP_FRAME_COUNT = 5;
     private static final int JUMP_OFFSET_X = 11 * FRAME_WIDTH;
     private static final int JUMP_OFFSET_Y = 1 * FRAME_HEIGHT;
 
-    private boolean isJumping = false;
-    private double velocityY = 0;
-    private final double gravity = 0.15;
-    private final double jumpStrength = -7;
-    private final double groundY = 600;
-    // private int jumpCount = 0;
-    private final double minY = 0;
-
-    // prone animation variables
-    private boolean isProne = false;
+    // Prone animation
     private static final int PRONE_FRAME_COUNT = 1;
     private static final int PRONE_OFFSET_X = 14 * FRAME_WIDTH;
     private static final int PRONE_OFFSET_Y = 0;
 
-    public Player(double x, double y, String imagePath) {
+    public Player(double x, double y, String imagePath, double groundY) {
+        this.groundY = groundY;
+
+        // === Initialize sprite sheet ===
         Image spriteSheet = new Image(getClass().getResource(imagePath).toExternalForm());
         view = new ImageView(spriteSheet);
         view.setFitWidth(FRAME_WIDTH);
@@ -50,9 +59,10 @@ public class Player {
         view.setX(x);
         view.setY(Math.min(y, groundY));
 
+        // === Animations ===
         walkAnimation = new SpriteAnimation(
                 view,
-                Duration.millis(600), // speed of animation
+                Duration.millis(600),
                 WALK_FRAME_COUNT,
                 COLUMNS,
                 WALK_OFFSET_X,
@@ -61,7 +71,8 @@ public class Player {
                 FRAME_HEIGHT);
         walkAnimation.setCycleCount(Animation.INDEFINITE);
 
-        jumpAnimation = new SpriteAnimation(view,
+        jumpAnimation = new SpriteAnimation(
+                view,
                 Duration.millis(600),
                 JUMP_FRAME_COUNT,
                 COLUMNS,
@@ -72,43 +83,62 @@ public class Player {
         jumpAnimation.setCycleCount(1);
         jumpAnimation.setOnFinished(_ -> {
             isJumping = false;
-            view.setViewport(new Rectangle2D(JUMP_OFFSET_X, JUMP_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
+            resetToIdle();
         });
 
         proneAnimation = new SpriteAnimation(
-            view, 
-            Duration.millis(400), 
-            PRONE_FRAME_COUNT, 
-            COLUMNS, 
-            PRONE_OFFSET_X, 
-            PRONE_OFFSET_Y, 
-            FRAME_WIDTH, 
-            FRAME_HEIGHT);
+                view,
+                Duration.millis(400),
+                PRONE_FRAME_COUNT,
+                COLUMNS,
+                PRONE_OFFSET_X,
+                PRONE_OFFSET_Y,
+                FRAME_WIDTH,
+                FRAME_HEIGHT);
         proneAnimation.setCycleCount(Animation.INDEFINITE);
     }
 
+    // === Getters ===
     public ImageView getView() {
         return view;
     }
 
+    public boolean isJumping() {
+        return isJumping;
+    }
+
+    public boolean isFacingRight() {
+        return facingRight;
+    }
+
+    public boolean isGrounded() {
+        double playerBottom = view.getY() + view.getFitHeight() - GROUND_OFFSET;
+        return playerBottom >= groundY - 0.5;
+    }
+
+    // === Movement ===
     public void moveLeft() {
-        if (isProne) return;
+        if (isProne)
+            return;
         moving = true;
         facingRight = false;
         view.setScaleX(-1);
         startWalking();
-        if (view.getX() > 0)
-            view.setX(view.getX() - speed);
+        if (view.getX() > 0) {
+            view.setX(view.getX() - SPEED);
+        }
     }
 
     public void moveRight() {
-        if (isProne) return;
+        if (isProne)
+            return;
         moving = true;
         facingRight = true;
         view.setScaleX(1);
         startWalking();
-        if (view.getX() + view.getFitWidth() < 800)
-            view.setX(view.getX() + speed);
+        if (view.getX() + view.getFitWidth() < 800) {
+            view.setX(view.getX() + SPEED);
+        }
     }
 
     public void stopMoving() {
@@ -124,57 +154,44 @@ public class Player {
 
     private void stopWalking() {
         walkAnimation.stop();
-        // reset to idle frame
-        if (!isProne) view.setViewport(new Rectangle2D(WALK_OFFSET_X, WALK_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
+        if (!isProne && !isJumping)
+            resetToIdle();
     }
 
-    public boolean isFacingRight() {
-        return facingRight;
+    // === Jumping ===
+    public void jump() {
+        if (!isJumping && isGrounded() && !isProne) {
+            isJumping = true;
+            velocityY = JUMP_STRENGTH;
+            jumpAnimation.playFromStart();
+        }
     }
 
-    // public void jump() {
-    //     if (!isJumping && isGrounded()) {
-    //         isJumping = true;
-    //         velocityY = jumpStrength;
-    //         jumpAnimation.playFromStart();
-    //         // jumpCount++;
-    //     }
-    // }
+    public void update() {
+        // Apply gravity if mid-air or going upward
+        if (!isGrounded() || velocityY < 0) {
+            velocityY += GRAVITY;
+            view.setY(view.getY() + velocityY);
+        }
 
-    // public void update() {
-    //     if (isJumping) {
-    //         velocityY += gravity;
-    //         view.setY(view.getY() + velocityY);
+        // Check ground collision
+        double playerBottom = view.getY() + view.getFitHeight() - GROUND_OFFSET;
+        if (playerBottom >= groundY) {
+            view.setY(groundY - view.getFitHeight() + GROUND_OFFSET);
+            velocityY = 0;
 
-    //         if (view.getY() < minY) {
-    //             view.setY(minY);
-    //             velocityY = 0;
-    //         }
-    //     }
+            if (isJumping) {
+                isJumping = false;
+                jumpAnimation.stop();
+                resetToIdle();
+            }
+        }
+    }
 
-    //     if (view.getY() >= groundY) {
-    //         view.setY(groundY);
-    //         velocityY = 0;
-    //         isJumping = false;
-    //         // jumpCount = 0;
-    //         stopJumping();
-    //     }
-    // }
-
-    // public void stopJumping() {
-    //     jumpAnimation.stop();
-    //     view.setViewport(new Rectangle2D(JUMP_OFFSET_X, JUMP_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
-    // }
-
-    // public boolean isJumping() {
-    //     return isJumping;
-    // }
-
-    // public boolean isGrounded() {
-    //     return view.getY() >= groundY;
-    // }
-
+    // === Prone ===
     public void prone() {
+        if (isJumping)
+            return;
         isProne = true;
         walkAnimation.stop();
         jumpAnimation.stop();
@@ -184,16 +201,24 @@ public class Player {
     public void standUp() {
         isProne = false;
         proneAnimation.stop();
+        resetToIdle();
+    }
+
+    // === Helpers ===
+    private void resetToIdle() {
         view.setViewport(new Rectangle2D(WALK_OFFSET_X, WALK_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
     }
 
+    // === Gun positioning ===
     public double getGunX() {
-        if (isProne) return view.getX() + (facingRight ? 52 : 0);
-        else return view.getX() + (facingRight ? 42 : 14);
+        return isProne
+                ? view.getX() + (facingRight ? 52 : 0)
+                : view.getX() + (facingRight ? 42 : 14);
     }
 
     public double getGunY() {
-        if (isProne) return getView().getY() + getView().getFitHeight() / 2;
-        else return view.getY() + 20;
+        return isProne
+                ? view.getY() + view.getFitHeight() / 2
+                : view.getY() + 20;
     }
 }

@@ -71,8 +71,9 @@ public class GameView {
         }
 
         // Place player just above the grass level
-        int playerY = groundY - 48; // adjust -48 to your player sprite height
-        player = new Player(100, playerY, "/se233/kellion/assets/Player.png");
+        // int playerHeight = (int) player.getView().getFitHeight();
+        int playerY = groundY + GRASS_HEIGHT - 64; // adjust -48 to your player sprite height
+        player = new Player(100, playerY, "/se233/kellion/assets/Player.png", groundY);
         root.getChildren().add(player.getView());
 
         // Bullet sprite
