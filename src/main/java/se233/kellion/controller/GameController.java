@@ -35,7 +35,7 @@ public class GameController {
                     double py = player.getGunY();
                     view.fireBullet(px, py, player.isFacingRight());
                 }
-                case S, DOWN -> player.prone();
+                case DOWN, CONTROL -> player.prone();
             }
         });
 
@@ -44,7 +44,7 @@ public class GameController {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
                 // case W, UP, SPACE -> player.stopJumping();
-                case S, DOWN -> player.standUp();
+                case DOWN, CONTROL -> player.standUp();
             }
         });
     }
