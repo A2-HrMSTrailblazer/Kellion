@@ -15,7 +15,7 @@ public class GameController {
         this.player = view.getPlayer();
 
         // Attach input when the Scene becomes available
-        view.getRoot().sceneProperty().addListener((obs, oldScene, newScene) -> {
+        view.getRoot().sceneProperty().addListener((_, _, newScene) -> {
             if (newScene != null) {
                 initInput(newScene);
             }
@@ -33,6 +33,7 @@ public class GameController {
                     double py = player.getView().getY() + player.getView().getFitHeight() / 2;
                     view.fireBullet(px, py, player.isFacingRight());
                 }
+                case S, DOWN -> player.prone();
             }
         });
 
@@ -41,6 +42,7 @@ public class GameController {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
                 // case W, UP, SPACE -> player.stopJumping();
+                case S, DOWN -> player.standUp();
             }
         });
     }
