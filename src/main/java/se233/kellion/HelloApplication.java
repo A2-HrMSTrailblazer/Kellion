@@ -13,9 +13,10 @@ public class HelloApplication extends Application {
         GameView gameView = new GameView();
         GameController controller = new GameController(gameView);
 
-        Scene scene = new Scene(gameView.getRoot(), 800, 600);
+        Scene scene = new Scene(gameView.getRoot(), 800, 525);
         stage.setTitle("Kellion");
         stage.setScene(scene);
+        stage.setResizable(false); // <-- Make window fixed!
         stage.show();
 
         gameView.getRoot().requestFocus();
