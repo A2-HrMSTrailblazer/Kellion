@@ -21,7 +21,7 @@ public class GameView {
     private static final int SOIL_HEIGHT = 32;
     private List<ImageView> bullets = new ArrayList<>();
     private WritableImage bulletSprite;
-    private static final int BULLET_SPEED = 5;
+    private static final int BULLET_SPEED = 3;
 
     public GameView() {
         root = new Pane();

@@ -29,8 +29,10 @@ public class GameController {
                 case RIGHT, D -> right = true;
                 // case W, UP, SPACE -> {if (player.isGrounded()){player.jump();}}
                 case J -> {
-                    double px = player.getView().getX() + player.getView().getFitWidth() / 2;
-                    double py = player.getView().getY() + player.getView().getFitHeight() / 2;
+                    // double px = player.getView().getX() + player.getView().getFitWidth() / 2;
+                    // double py = player.getView().getY() + player.getView().getFitHeight() / 2;
+                    double px = player.getGunX();
+                    double py = player.getGunY();
                     view.fireBullet(px, py, player.isFacingRight());
                 }
                 case S, DOWN -> player.prone();

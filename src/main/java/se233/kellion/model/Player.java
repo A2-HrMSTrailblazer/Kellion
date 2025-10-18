@@ -186,4 +186,14 @@ public class Player {
         proneAnimation.stop();
         view.setViewport(new Rectangle2D(WALK_OFFSET_X, WALK_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
     }
+
+    public double getGunX() {
+        if (isProne) return view.getX() + (facingRight ? 52 : 0);
+        else return view.getX() + (facingRight ? 42 : 14);
+    }
+
+    public double getGunY() {
+        if (isProne) return getView().getY() + getView().getFitHeight() / 2;
+        else return view.getY() + 20;
+    }
 }
