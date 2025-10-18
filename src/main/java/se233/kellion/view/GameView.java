@@ -19,6 +19,7 @@ public class GameView {
     private static final int SKY_TILE_SIZE = 16;
     private static final int GRASS_HEIGHT = 16;
     private static final int SOIL_HEIGHT = 32;
+    private static final int WATER_TILE_HEIGHT = 16;
     private List<ImageView> bullets = new ArrayList<>();
     private WritableImage bulletSprite;
     private static final int BULLET_SPEED = 5;
@@ -28,6 +29,12 @@ public class GameView {
         Image tileset = new Image(getClass().getResource("/se233/kellion/assets/Stage_1.png").toExternalForm());
         WritableImage grassTile = new WritableImage(tileset.getPixelReader(), 0, 0, TILE_SIZE, GRASS_HEIGHT);
         WritableImage soilTile = new WritableImage(tileset.getPixelReader(), 256, 0, TILE_SIZE, SOIL_HEIGHT);
+        Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave.png").toExternalForm());
+        WritableImage waterTile = new WritableImage(waveset.getPixelReader(), 0, 16, TILE_SIZE, TILE_SIZE);
+        WritableImage[] waveTiles = new WritableImage[]{
+                new WritableImage(waveset.getPixelReader(), 0, 0, TILE_SIZE, WATER_TILE_HEIGHT),
+                new WritableImage(waveset.getPixelReader(), 32, 0, TILE_SIZE, WATER_TILE_HEIGHT),
+        };
 
         // Sky tiles: crop 5 randomizable 16x16 starting from (48,48)
         WritableImage[] skyTiles = new WritableImage[5];
@@ -35,7 +42,7 @@ public class GameView {
             skyTiles[i] = new WritableImage(tileset.getPixelReader(), 48 + SKY_TILE_SIZE * i, 48, SKY_TILE_SIZE, SKY_TILE_SIZE);
 
         // Set the groundY so that grass and soil fill the lower part of the window
-        int groundY = 480; // Top of grass
+        int groundY = 368; // Top of grass
         int skyRows = groundY / SKY_TILE_SIZE;
         int skyCols = WINDOW_WIDTH / SKY_TILE_SIZE;
         java.util.Random rand = new java.util.Random();
@@ -54,6 +61,7 @@ public class GameView {
 
         // Draw grass and soil across bottom
         int groundCols = WINDOW_WIDTH / TILE_SIZE;
+        int SOIL_LAYERS = 1;
         for (int col = 0; col < groundCols; col++) {
             int x = col * TILE_SIZE;
 
@@ -64,10 +72,43 @@ public class GameView {
             root.getChildren().add(grassView);
 
             // Soil directly below
-            ImageView soilView = new ImageView(soilTile);
-            soilView.setX(x);
-            soilView.setY(groundY + GRASS_HEIGHT);
-            root.getChildren().add(soilView);
+            int currentY = groundY + GRASS_HEIGHT;
+            for (int i = 0; i < SOIL_LAYERS && currentY < WINDOW_HEIGHT; i++) {
+                ImageView soilView = new ImageView(soilTile);
+                soilView.setX(x);
+                soilView.setY(currentY);
+                root.getChildren().add(soilView);
+                currentY += SOIL_HEIGHT;
+            }
+
+            // Fill Wave surface
+            int waterStartY = currentY;
+            int rows = (int) Math.ceil((double)(WINDOW_HEIGHT - waterStartY) / WATER_TILE_HEIGHT);
+            int cols = WINDOW_WIDTH / TILE_SIZE;
+
+            for (int c = 0; c < cols; c++) {
+                int X = c * TILE_SIZE;
+                int idx = c % 2;
+                ImageView wave = new ImageView(waveTiles[idx]);
+                wave.setX(X);
+                wave.setY(waterStartY);
+                wave.setSmooth(false);
+                root.getChildren().add(wave);
+            }
+
+            //Fill water
+            int Y = waterStartY + WATER_TILE_HEIGHT;
+            while (Y < WINDOW_HEIGHT) {
+                for (int c = 0; c < cols; c++) {
+                    int X = c * TILE_SIZE;
+                    ImageView deep = new ImageView(waterTile);
+                    deep.setX(X);
+                    deep.setY(Y);
+                    deep.setSmooth(false);
+                    root.getChildren().add(deep);
+                }
+                Y += (WATER_TILE_HEIGHT - 1);
+            }
         }
 
         // Place player just above the grass level
