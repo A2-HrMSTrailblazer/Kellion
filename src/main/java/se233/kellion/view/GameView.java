@@ -4,6 +4,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
+import se233.kellion.model.Platform;
 import se233.kellion.model.Player;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class GameView {
     private static final int SOIL_HEIGHT = 32;
     private static final int WATER_TILE_HEIGHT = 16;
     private List<ImageView> bullets = new ArrayList<>();
+    private List<Platform> platforms = new ArrayList<>();
     private WritableImage bulletSprite;
     private static final int BULLET_SPEED = 3;
 
@@ -31,7 +33,7 @@ public class GameView {
         WritableImage soilTile = new WritableImage(tileset.getPixelReader(), 256, 0, TILE_SIZE, SOIL_HEIGHT);
         Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave.png").toExternalForm());
         WritableImage waterTile = new WritableImage(waveset.getPixelReader(), 0, 16, TILE_SIZE, TILE_SIZE);
-        WritableImage[] waveTiles = new WritableImage[]{
+        WritableImage[] waveTiles = new WritableImage[] {
                 new WritableImage(waveset.getPixelReader(), 0, 0, TILE_SIZE, WATER_TILE_HEIGHT),
                 new WritableImage(waveset.getPixelReader(), 32, 0, TILE_SIZE, WATER_TILE_HEIGHT),
         };
@@ -39,7 +41,8 @@ public class GameView {
         // Sky tiles: crop 5 randomizable 16x16 starting from (48,48)
         WritableImage[] skyTiles = new WritableImage[5];
         for (int i = 0; i < 5; i++)
-            skyTiles[i] = new WritableImage(tileset.getPixelReader(), 48 + SKY_TILE_SIZE * i, 48, SKY_TILE_SIZE, SKY_TILE_SIZE);
+            skyTiles[i] = new WritableImage(tileset.getPixelReader(), 48 + SKY_TILE_SIZE * i, 48, SKY_TILE_SIZE,
+                    SKY_TILE_SIZE);
 
         // Set the groundY so that grass and soil fill the lower part of the window
         int groundY = 368; // Top of grass
@@ -83,7 +86,7 @@ public class GameView {
 
             // Fill Wave surface
             int waterStartY = currentY;
-            int rows = (int) Math.ceil((double)(WINDOW_HEIGHT - waterStartY) / WATER_TILE_HEIGHT);
+            int rows = (int) Math.ceil((double) (WINDOW_HEIGHT - waterStartY) / WATER_TILE_HEIGHT);
             int cols = WINDOW_WIDTH / TILE_SIZE;
 
             for (int c = 0; c < cols; c++) {
@@ -96,7 +99,7 @@ public class GameView {
                 root.getChildren().add(wave);
             }
 
-            //Fill water
+            // Fill water
             int Y = waterStartY + WATER_TILE_HEIGHT;
             while (Y < WINDOW_HEIGHT) {
                 for (int c = 0; c < cols; c++) {
@@ -109,6 +112,8 @@ public class GameView {
                 }
                 Y += (WATER_TILE_HEIGHT - 1);
             }
+
+            createPlatforms(tileset);
         }
 
         // Place player just above the grass level
@@ -118,7 +123,8 @@ public class GameView {
         root.getChildren().add(player.getView());
 
         // Bullet sprite
-        Image characterSheet = new Image(getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
+        Image characterSheet = new Image(
+                getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
         bulletSprite = new WritableImage(characterSheet.getPixelReader(), 287, 805, 8, 16);
     }
 
@@ -146,7 +152,59 @@ public class GameView {
         bullets.removeAll(toRemove);
     }
 
-    public Pane getRoot() { return root; }
-    public Player getPlayer() { return player; }
-    public List<ImageView> getBullets() { return bullets; }
+    private void createPlatforms(Image tileset) {
+        WritableImage grassTile = new WritableImage(tileset.getPixelReader(), 0, 0, TILE_SIZE, GRASS_HEIGHT);
+        WritableImage soilTile = new WritableImage(tileset.getPixelReader(), 256, 0, TILE_SIZE, SOIL_HEIGHT);
+
+        int[][] platformPositions = {
+                { 200, 100 },
+                { 400, 250 }
+        };
+
+        int platformWidthTiles = 4;
+        int platformHeightTiles = 2;
+
+        for (int[] position : platformPositions) {
+            int x = position[0];
+            int y = position[1];
+
+            Pane platformPane = new Pane();
+
+            for (int tx = 0; tx < platformWidthTiles; tx++) {
+                ImageView grassView = new ImageView(grassTile);
+                grassView.setX(tx * TILE_SIZE);
+                grassView.setY(0);
+                platformPane.getChildren().add(grassView);
+            }
+
+            for (int tx = 0; tx < platformWidthTiles; tx++) {
+                ImageView soilView = new ImageView(soilTile);
+                soilView.setX(tx * TILE_SIZE);
+                soilView.setY(GRASS_HEIGHT);
+                platformPane.getChildren().add(soilView);
+            }
+
+            platformPane.setLayoutX(x);
+            platformPane.setLayoutY(y);
+
+            root.getChildren().add(platformPane);
+            platforms.add(new Platform(platformPane));
+        }
+    }
+
+    public Pane getRoot() {
+        return root;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public List<ImageView> getBullets() {
+        return bullets;
+    }
+
+    public List<Platform> getPlatforms() {
+        return platforms;
+    }
 }

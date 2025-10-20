@@ -60,7 +60,8 @@ public class GameController {
     }
 
     private void update() {
-        player.update();
+        player.update(view.getPlatforms());
+        player.handleCollisions(view.getPlatforms());
 
         // if (!player.isJumping()) {
         if (left) {
