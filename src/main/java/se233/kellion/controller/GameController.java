@@ -24,6 +24,7 @@ public class GameController {
 
     private void initInput(Scene scene) {
         scene.setOnKeyPressed(e -> {
+            if (view.isPlayerDead()) return;
             switch (e.getCode()) {
                 case LEFT, A -> left = true;
                 case RIGHT, D -> right = true;
@@ -40,6 +41,7 @@ public class GameController {
         });
 
         scene.setOnKeyReleased(e -> {
+            if (view.isPlayerDead()) return;
             switch (e.getCode()) {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
@@ -60,18 +62,20 @@ public class GameController {
     }
 
     private void update() {
-        player.update();
-
-        // if (!player.isJumping()) {
-        if (left) {
-            player.moveLeft();
-        } else if (right) {
-            player.moveRight();
-        } else {
-            player.stopMoving();
+        if (!view.isPlayerDead()) {
+            player.update();
+            if (left) {
+                player.moveLeft();
+            } else if (right) {
+                player.moveRight();
+            } else {
+                player.stopMoving();
+            }
         }
-
         view.updateBullets();
-        // }
+        view.updateBossBullets();
+        view.checkCollisions();
+        view.updateBoss();
     }
+
 }
