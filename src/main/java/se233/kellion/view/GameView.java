@@ -37,7 +37,7 @@ public class GameView {
     private static final int WATER_TILE_HEIGHT = 16;
 
     private int bossFireCounter = 0;
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
     private boolean playerDead = false;
 
     public GameView() {
