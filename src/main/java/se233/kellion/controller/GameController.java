@@ -77,4 +77,7 @@ public class GameController {
         view.checkCollisions();
         view.updateBoss();
     }
+
+    public void pauseGameLoop() {}
+    public void resumeGameLoop() {}
 }
