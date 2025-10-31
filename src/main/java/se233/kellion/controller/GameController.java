@@ -9,75 +9,66 @@ public class GameController {
     private final GameView view;
     private final Player player;
     private boolean left, right;
+    private AnimationTimer gameLoop;
 
     public GameController(GameView view) {
         this.view = view;
         this.player = view.getPlayer();
-
-        // Attach input when the Scene becomes available
-        view.getRoot().sceneProperty().addListener((_, _, newScene) -> {
-            if (newScene != null) {
-                initInput(newScene);
-            }
-        });
     }
 
-    private void initInput(Scene scene) {
+    public void attachInputHandlersToScene(Scene scene) {
         scene.setOnKeyPressed(e -> {
-            if (view.isPlayerDead()) return;
             switch (e.getCode()) {
                 case LEFT, A -> left = true;
                 case RIGHT, D -> right = true;
                 case W, UP, SPACE -> player.jump();
-                case J -> {
-                    // double px = player.getView().getX() + player.getView().getFitWidth() / 2;
-                    // double py = player.getView().getY() + player.getView().getFitHeight() / 2;
-                    double px = player.getGunX();
-                    double py = player.getGunY();
-                    view.fireBullet(px, py, player.isFacingRight());
-                }
+                case J -> view.fireBullet(player.getGunX(), player.getGunY(), player.isFacingRight());
                 case DOWN, CONTROL -> player.prone();
+                default -> {}
             }
         });
 
         scene.setOnKeyReleased(e -> {
-            if (view.isPlayerDead()) return;
             switch (e.getCode()) {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
-                // case W, UP, SPACE -> player.stopJumping();
                 case DOWN, CONTROL -> player.standUp();
+                default -> {}
             }
         });
     }
 
     public void startGameLoop() {
-        AnimationTimer timer = new AnimationTimer() {
+        gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 update();
             }
         };
-        timer.start();
+        gameLoop.start();
+        System.out.println("Game loop started");
     }
 
     private void update() {
         if (!view.isPlayerDead()) {
             player.update();
-            if (left) {
-                player.moveLeft();
-            } else if (right) {
-                player.moveRight();
-            } else {
-                player.stopMoving();
-            }
+
+            if (left) player.moveLeft();
+            else if (right) player.moveRight();
+            else player.stopMoving();
         }
+
         view.updateBullets();
         view.updateBossBullets();
         view.checkCollisions();
         view.updateBoss();
     }
 
-    public void pauseGameLoop() {}
-    public void resumeGameLoop() {}
+    public void pauseGameLoop() {
+        if (gameLoop != null) gameLoop.stop();
+    }
+
+    public void resumeGameLoop() {
+        if (gameLoop != null) gameLoop.start();
+    }
 }

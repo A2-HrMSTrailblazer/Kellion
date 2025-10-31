@@ -1,5 +1,6 @@
 package se233.kellion.view;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -121,6 +122,8 @@ public class GameMenu {
         playIV.setOnMouseClicked(e -> {
             started = true;
             startOverlay.setVisible(false);
+            startOverlay.setPickOnBounds(false);
+            startOverlay.setMouseTransparent(true);
             onStart.run();
         });
         quitIV.setOnMouseClicked(e -> onQuit.run());
