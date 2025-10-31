@@ -70,4 +70,7 @@ public class GameController {
         view.updateBullets();
         // }
     }
+
+    public void pauseGameLoop() {}
+    public void resumeGameLoop() {}
 }
