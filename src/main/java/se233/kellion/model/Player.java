@@ -48,6 +48,13 @@ public class Player {
     private static final int PRONE_OFFSET_X = 14 * FRAME_WIDTH;
     private static final int PRONE_OFFSET_Y = 0;
 
+    private static final Rectangle2D[] DEAD_FRAME_RECTS = {
+            new Rectangle2D(781, 131, 64, 64),
+            new Rectangle2D(846, 131, 64, 64),
+            new Rectangle2D(974, 194, 32, 32)
+    };
+    private int lives = 3;
+
     private static final double HITBOX_SCALE_X = 0.3; // 80% ของกว้างจริง
     private static final double HITBOX_SCALE_Y = 0.4;
 
@@ -122,9 +129,9 @@ public class Player {
 
     public Bounds getHitboxBounds() {
         Bounds b = getView().getBoundsInParent();
-        double w = b.getWidth()  * HITBOX_SCALE_X;
+        double w = b.getWidth() * HITBOX_SCALE_X;
         double h = b.getHeight() * HITBOX_SCALE_Y;
-        double minX = b.getMinX() + (b.getWidth()  - w) / 2.0;
+        double minX = b.getMinX() + (b.getWidth() - w) / 2.0;
         double minY = b.getMinY() + (b.getHeight() - h) / 2.0;
         return new javafx.geometry.BoundingBox(minX, minY, w, h);
     }
@@ -218,7 +225,7 @@ public class Player {
     }
 
     // === Helpers ===
-    private void resetToIdle() {
+    public void resetToIdle() {
         view.setViewport(new Rectangle2D(WALK_OFFSET_X, WALK_OFFSET_Y, FRAME_WIDTH, FRAME_HEIGHT));
     }
 
@@ -234,4 +241,41 @@ public class Player {
                 ? view.getY() + view.getFitHeight() / 2
                 : view.getY() + 20;
     }
+
+    public void playDeathAnimation() {
+        view.setViewport(DEAD_FRAME_RECTS[0]);
+        view.setFitWidth(DEAD_FRAME_RECTS[0].getWidth());
+        view.setFitHeight(DEAD_FRAME_RECTS[0].getHeight());
+
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(0), e -> {
+                    view.setViewport(DEAD_FRAME_RECTS[0]);
+                    view.setFitWidth(DEAD_FRAME_RECTS[0].getWidth());
+                    view.setFitHeight(DEAD_FRAME_RECTS[0].getHeight());
+                }),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(110), e -> {
+                    view.setViewport(DEAD_FRAME_RECTS[1]);
+                    view.setFitWidth(DEAD_FRAME_RECTS[1].getWidth());
+                    view.setFitHeight(DEAD_FRAME_RECTS[1].getHeight());
+                }),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(220), e -> {
+                    view.setViewport(DEAD_FRAME_RECTS[2]);
+                    view.setFitWidth(DEAD_FRAME_RECTS[2].getWidth());
+                    view.setFitHeight(DEAD_FRAME_RECTS[2].getHeight());
+                }));
+        timeline.play();
+    }
+
+    public int getLives() {
+        return lives;
+    }
+
+    public void loseLife() {
+        lives--;
+    }
+
+    public void setLives(int l) {
+        lives = l;
+    }
+
 }
