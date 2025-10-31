@@ -39,6 +39,9 @@ public class GameController {
     }
 
     public void startGameLoop() {
+        if (gameLoop != null) {            // กันสตาร์ทซ้ำ
+            return;
+        }
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -47,6 +50,14 @@ public class GameController {
         };
         gameLoop.start();
         System.out.println("Game loop started");
+
+    }
+    public void stopGameLoop() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+            gameLoop = null;
+            System.out.println("Game loop stopped");
+        }
     }
 
     private void update() {
@@ -62,13 +73,7 @@ public class GameController {
         view.updateBossBullets();
         view.checkCollisions();
         view.updateBoss();
+
     }
 
-    public void pauseGameLoop() {
-        if (gameLoop != null) gameLoop.stop();
-    }
-
-    public void resumeGameLoop() {
-        if (gameLoop != null) gameLoop.start();
-    }
 }

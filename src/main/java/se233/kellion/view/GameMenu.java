@@ -94,7 +94,7 @@ public class GameMenu {
         Image playDefault = new Image(getClass().getResource("/se233/kellion/assets/PLAY.png").toExternalForm());
         Image playHover   = new Image(getClass().getResource("/se233/kellion/assets/PLAY_2.png").toExternalForm());
         Image quitDefault = new Image(getClass().getResource("/se233/kellion/assets/Title_QUIT.png").toExternalForm());
-        Image quitHover = new Image(getClass().getResource("/se233/kellion/assets/QUIT_2.png").toExternalForm());
+        Image quitHover = new Image(getClass().getResource("/se233/kellion/assets/Title_QUIT_2.png").toExternalForm());
 
         ImageView playIV  = new ImageView(playDefault);
         ImageView quitIV = new ImageView(quitDefault);
@@ -138,7 +138,7 @@ public class GameMenu {
         Image contDefault = new Image(getClass().getResource("/se233/kellion/assets/CONTINUE.png").toExternalForm());
         Image contHover   = new Image(getClass().getResource("/se233/kellion/assets/CONTINUE_2.png").toExternalForm());
         Image quitDefault = new Image(getClass().getResource("/se233/kellion/assets/QUIT.png").toExternalForm());
-        Image quitHover   = new Image(getClass().getResource("/se233/kellion/assets/QUIT_2.png").toExternalForm());
+        Image quitHover   = new Image(getClass().getResource("/se233/kellion/assets/Title_QUIT_2.png").toExternalForm());
 
         ImageView contIV = new ImageView(contDefault);
         ImageView quitIV = new ImageView(quitDefault);

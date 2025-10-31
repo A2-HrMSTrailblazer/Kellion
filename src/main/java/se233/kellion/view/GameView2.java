@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class GameView {
+public class GameView2 extends GameView {
     private final Pane root;
     private final Player player;
-    private final Boss boss;
+    private Boss boss;
     private final List<Bullet> bullets = new ArrayList<>();
     private final List<Bullet> bossBullets = new ArrayList<>();
     private final WritableImage bulletSprite;
@@ -31,6 +31,7 @@ public class GameView {
     private static final int GRASS_HEIGHT = 16;
     private static final int SOIL_HEIGHT = 32;
     private static final int WATER_TILE_HEIGHT = 16;
+    private static final int Stalactite_HEIGHT = 160;
 
     private int bossFireCounter = 0;
     private static final boolean DEBUG_MODE = true;
@@ -42,16 +43,20 @@ public class GameView {
     private boolean nextSceneTriggered = false;
 
     // Constructor: Sets up background, ground, player, boss, and assets
-    public GameView() {
+    public GameView2() {
+        super();
         root = new Pane();
 
         // Load tileset and cut tiles from the spritesheet
-        Image tileset = new Image(getClass().getResource("/se233/kellion/assets/Stage_1.png").toExternalForm());
+        Image tileset = new Image(getClass().getResource("/se233/kellion/assets/Stage_2.png").toExternalForm());
         WritableImage grassTile = new WritableImage(tileset.getPixelReader(), 0, 0, TILE_SIZE, GRASS_HEIGHT);
         WritableImage soilTile = new WritableImage(tileset.getPixelReader(), 256, 0, TILE_SIZE, SOIL_HEIGHT);
 
+        Image stalac = new Image(getClass().getResource("/se233/kellion/assets/STALACTITE.png").toExternalForm());
+        WritableImage stalactiteTile = new WritableImage(stalac.getPixelReader(), 0, 0, 525, Stalactite_HEIGHT);
+
         // Water/wave tiles
-        Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave.png").toExternalForm());
+        Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave_2.png").toExternalForm());
         WritableImage waterTile = new WritableImage(waveset.getPixelReader(), 0, 16, TILE_SIZE, TILE_SIZE);
         WritableImage[] waveTiles = {
                 new WritableImage(waveset.getPixelReader(), 0, 0, TILE_SIZE, WATER_TILE_HEIGHT),
@@ -78,6 +83,16 @@ public class GameView {
                 skyView.setY(row * SKY_TILE_SIZE);
                 root.getChildren().add(skyView);
             }
+        }
+
+        int cols1 = (int) Math.ceil((double) Config.WINDOW_WIDTH / TILE_SIZE);
+
+        for (int c = 0; c < cols1; c++) {
+            ImageView iv = new ImageView(stalactiteTile);
+            iv.setX(c * 525);
+            iv.setY(0);               // ชิดขอบบนของหน้าต่าง (y = 0)
+            root.getChildren().add(iv);
+            iv.toFront();
         }
 
         // Draw grass and soil tiles (ground)
@@ -128,9 +143,34 @@ public class GameView {
         double bossX = Config.WINDOW_WIDTH - Boss.SPRITE_WIDTH - 55;
         double bossY = groundY + GRASS_HEIGHT - Boss.SPRITE_HEIGHT - 48;
         boss = new Boss(bossX, bossY, "/se233/kellion/assets/Defense_Wall.png");
+
+        Image javaSheet = new Image(getClass().getResource("/se233/kellion/assets/Java.png").toExternalForm());
+        int sheetW = (int) javaSheet.getWidth();   // 306
+        int sheetH = (int) javaSheet.getHeight();  // 113
+
+        int frames = 3;
+        int FRAME_W = sheetW / frames;             // 102
+        int FRAME_H = sheetH;                      // 113
+
+        int TRIM_BOTTOM = 17;
+        int CROP_H = Math.max(1, FRAME_H - TRIM_BOTTOM);
+
+        WritableImage bossIdle = new WritableImage(
+                javaSheet.getPixelReader(),
+                0,                      // frame 0
+                0,
+                Math.min(FRAME_W, sheetW),
+                Math.min(CROP_H, sheetH)
+        );
+
+        boss.getView().setImage(bossIdle);
         boss.getView().setScaleX(2);
         boss.getView().setScaleY(2);
+
+        double trimmed = (FRAME_H - CROP_H) * boss.getView().getScaleY();
+        boss.getView().setY(boss.getView().getY() -30);
         root.getChildren().add(boss.getView());
+
 
         // Load bullet sprites
         Image characterSheet = new Image(
@@ -237,7 +277,7 @@ public class GameView {
         // Boss bullets hitting player
         List<Bullet> bossBulletsToRemove = new ArrayList<>();
         for (Bullet bullet : bossBullets) {
-            if (!playerDead && CollisionUtil.intersects(bullet.getView(), player.getView())) {
+            if (!playerDead && bullet.getView().getBoundsInParent().intersects(player.getHitboxBounds())) {
                 killPlayer();
                 root.getChildren().remove(bullet.getView());
                 bossBulletsToRemove.add(bullet);
@@ -269,22 +309,33 @@ public class GameView {
             bossFireCounter = 0;
         }
 
-        if (DEBUG_MODE)
-            updateAllHitboxes();
+        if (DEBUG_MODE) updateAllHitboxes();
         checkLevelTransition();
     }
 
     // Change boss sprite to destroyed form
     private void showBossDestroyedSprite() {
-        Image src = new Image(getClass().getResource("/se233/kellion/assets/Defense_Wall.png").toExternalForm());
-        WritableImage destroyedSprite = new WritableImage(src.getPixelReader(), 113, 96, 110, 64);
+        Image src = new Image(getClass().getResource("/se233/kellion/assets/Java.png").toExternalForm());
+        WritableImage destroyedSprite = new WritableImage(src.getPixelReader(), 226, 0, 80, 40);
         boss.getView().setImage(destroyedSprite);
         boss.getView().setScaleX(2.0);
         boss.getView().setScaleY(2.0);
-        boss.getView().setY(boss.getView().getY() + 146);
+        boss.getView().setY(boss.getView().getY());
         player.getView().toFront();
 
         boss1Defeated = true;
+    }
+
+    private void checkLevelTransition() {
+        if (!boss1Defeated) return;
+
+        double playerRight = player.getView().getX() + player.getView().getFitWidth();
+        if (playerRight >= Config.WINDOW_WIDTH - 4) {
+            nextSceneTriggered = true;
+            Runnable go = onNextScene;
+            onNextScene.run();
+            go.run();
+        }
     }
 
     // Debug helpers: draw rectangles around game objects
@@ -315,9 +366,8 @@ public class GameView {
         if (boss != null && !boss.isDead())
             drawHitbox(boss.getView(), "debugBoss", Color.RED);
 
-        for (int i = 0; i < bullets.size(); i++) {
+        for (int i = 0; i < bullets.size(); i++)
             drawHitbox(bullets.get(i).getView(), "bulletDebug_" + i, Color.ORANGE);
-        }
     }
 
     private void updateAllBossBulletHitboxes() {
@@ -329,23 +379,10 @@ public class GameView {
 
         root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
                 n.getId().contains("bossBulletDebug"));
-        for (int i = 0; i < bossBullets.size(); i++) {
+
+        for (int i = 0; i < bossBullets.size(); i++)
             drawHitbox(bossBullets.get(i).getView(), "bossBulletDebug_" + i, Color.CYAN);
-        }
     }
-
-    private void checkLevelTransition() {
-        if (!boss1Defeated || nextSceneTriggered) return;
-
-        double playerRight = player.getView().getX() + player.getView().getFitWidth();
-        if (playerRight >= Config.WINDOW_WIDTH - 4) {
-            nextSceneTriggered = true;
-            Runnable go = onNextScene;
-            onNextScene = () -> {};
-            go.run();
-        }
-    }
-
 
     // Player death
     public void killPlayer() {
@@ -354,14 +391,6 @@ public class GameView {
             player.getView().setOpacity(0.4); // fade effect
             System.out.println("Player killed by boss bullet!");
         }
-    }
-
-    public void setOnNextScene(Runnable r) {
-        this.onNextScene = (r != null) ? r : () -> {};
-    }
-
-    public boolean isBoss1Defeated() {
-        return boss1Defeated;
     }
 
     // Getters
@@ -377,11 +406,23 @@ public class GameView {
         return bullets;
     }
 
+    private void setBoss(Boss b) {
+        this.boss = b;
+    }
+
     public Boss getBoss() {
         return boss;
     }
 
     public boolean isPlayerDead() {
         return playerDead;
+    }
+
+    public void setOnNextScene(Runnable r) {
+        this.onNextScene = (r != null) ? r : () -> {};
+    }
+
+    public boolean isBoss1Defeated() {
+        return boss1Defeated;
     }
 }
