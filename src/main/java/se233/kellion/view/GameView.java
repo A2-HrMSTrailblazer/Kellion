@@ -1,6 +1,7 @@
 package se233.kellion.view;
 
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
@@ -8,6 +9,7 @@ import javafx.scene.image.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import se233.kellion.model.Boss;
 import se233.kellion.model.Bullet;
 import se233.kellion.model.Player;
@@ -301,8 +303,26 @@ public class GameView {
         if (!playerDead) {
             playerDead = true;
             player.playDeathAnimation();
-            System.out.println("Player killed by boss bullet!");
+
+            player.loseLife();
+            System.out.println("Player killed by boss bullet! Lives left: " + player.getLives());
+
+            if (player.getLives() > 0) {
+                PauseTransition delay = new PauseTransition(Duration.millis(350));
+                delay.setOnFinished(_ -> respawnPlayer());
+                delay.play();
+            }
+            else {
+                System.out.println("Game Over!");
+            }
         }
+    }
+
+    private void respawnPlayer() {
+        player.getView().setX(100);
+        player.getView().setY(368 + GRASS_HEIGHT - 64);
+        player.resetToIdle();
+        playerDead = false;
     }
 
     // --- Public getters ---
