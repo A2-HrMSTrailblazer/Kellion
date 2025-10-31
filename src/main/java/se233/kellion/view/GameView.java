@@ -1,5 +1,8 @@
 package se233.kellion.view;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.beans.value.WritableMapValue;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.image.*;
@@ -12,6 +15,7 @@ import se233.kellion.model.Player;
 import se233.kellion.util.CollisionUtil;
 import se233.kellion.util.Config;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -24,6 +28,7 @@ public class GameView {
     private final List<Bullet> bossBullets = new ArrayList<>();
     private final WritableImage bulletSprite;
     private final WritableImage bossBulletSprite;
+    private WritableImage[] explosionFrames;
 
     // Tile and layout constants
     private static final int TILE_SIZE = 32;
@@ -33,7 +38,7 @@ public class GameView {
     private static final int WATER_TILE_HEIGHT = 16;
 
     private int bossFireCounter = 0;
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
     private boolean playerDead = false;
 
     // Constructor: Sets up background, ground, player, boss, and assets
@@ -132,6 +137,7 @@ public class GameView {
                 getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
         bulletSprite = new WritableImage(characterSheet.getPixelReader(), 287, 805, 8, 16);
         bossBulletSprite = new WritableImage(characterSheet.getPixelReader(), 368, 805, 8, 16);
+        loadExplosionFrames();
 
         if (DEBUG_MODE)
             updateAllHitboxes();
@@ -200,6 +206,7 @@ public class GameView {
             for (Bullet bullet : bullets) {
                 if (CollisionUtil.intersects(bullet.getView(), boss.getView())) {
                     boss.damage(10);
+                    showExplosionEffect(bullet.getView().getX(), bullet.getView().getY());
                     toRemove.add(bullet);
                     root.getChildren().remove(bullet.getView());
 
@@ -233,6 +240,7 @@ public class GameView {
         List<Bullet> bossBulletsToRemove = new ArrayList<>();
         for (Bullet bullet : bossBullets) {
             if (!playerDead && CollisionUtil.intersects(bullet.getView(), player.getView())) {
+                showExplosionEffect(bullet.getView().getX(), bullet.getView().getY());
                 killPlayer();
                 root.getChildren().remove(bullet.getView());
                 bossBulletsToRemove.add(bullet);
@@ -245,6 +253,39 @@ public class GameView {
 
         if (DEBUG_MODE)
             updateAllHitboxes();
+    }
+
+    private void loadExplosionFrames() {
+        Image characterSheet = new Image(getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
+        explosionFrames = new WritableImage[3];
+        int startX = 215, startY = 905, frameSize = 32, space = 1;
+        for (int i = 0; i < 3; i++) {
+            explosionFrames[i] = new WritableImage(
+                characterSheet.getPixelReader(),
+                startX + i * (frameSize + space),
+                startY,
+                frameSize,
+                frameSize
+            );
+        }
+    }
+
+    private void showExplosionEffect(double x, double y) {
+        ImageView explosion = new ImageView(explosionFrames[0]);
+        explosion.setFitWidth(32);
+        explosion.setFitHeight(32);
+        explosion.setX(x - 16);
+        explosion.setY(y - 16);
+
+        root.getChildren().add(explosion);
+
+        Timeline timeline = new Timeline(
+            new KeyFrame(javafx.util.Duration.millis(0), _ -> explosion.setImage(explosionFrames[0])),
+            new KeyFrame(javafx.util.Duration.millis(80), _ -> explosion.setImage(explosionFrames[1])),
+            new KeyFrame(javafx.util.Duration.millis(160), _ -> explosion.setImage(explosionFrames[2])),
+            new KeyFrame(javafx.util.Duration.millis(240), _ -> root.getChildren().remove(explosion))
+        );
+        timeline.play();
     }
 
     // Boss behavior and attack cycle
