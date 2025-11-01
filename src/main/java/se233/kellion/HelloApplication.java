@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import se233.kellion.controller.GameController;
+import se233.kellion.exception.KellionExceptionHandler;
 import se233.kellion.view.GameScene;
 import se233.kellion.view.GameView2;
 import se233.kellion.view.GameView3;
@@ -58,6 +59,7 @@ public class HelloApplication extends Application {
 
 
     public static void main(String[] args) {
-        launch();
+        try{ launch(); }
+        catch (Throwable e) { KellionExceptionHandler.handle(e); }
     }
 }
