@@ -1,7 +1,6 @@
 package se233.kellion.view;
 
 import javafx.animation.PauseTransition;
-import javafx.animation.Timeline;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.image.*;
@@ -19,98 +18,66 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class GameView {
-    // --- Core Game Entities & Assets ---
-    protected final Pane root;
-    protected final Player player;
-    public final Boss boss;
+public class GameView3 extends GameView {
+    private final Pane root;
+    private final Player player;
+    private Boss boss;
     private final List<Bullet> bullets = new ArrayList<>();
     private final List<Bullet> bossBullets = new ArrayList<>();
     private final WritableImage bulletSprite;
     private final WritableImage bossBulletSprite;
-    private WritableImage[] explosionFrames;
+    private WritableImage bossFrame1;
+    private WritableImage bossFrame2;
 
-    // --- Level/Tile Assets ---
+    // Tile and layout constants
     private static final int TILE_SIZE = 32;
     private static final int SKY_TILE_SIZE = 16;
     private static final int GRASS_HEIGHT = 16;
     private static final int SOIL_HEIGHT = 32;
     private static final int WATER_TILE_HEIGHT = 16;
+    private static final int Stalactite_HEIGHT = 160;
 
     private int bossFireCounter = 0;
-
-    // --- Game State Flags ---
-    private static final boolean DEBUG_MODE = false;
-    private static final boolean DEBUG_HITBOX = false;
+    private static final boolean DEBUG_MODE = true;
     private boolean playerDead = false;
-    protected boolean boss1Defeated = false;
+    private static final boolean DEBUG_HITBOX = false;
+
+    private boolean boss1Defeated = false;
     private Runnable onNextScene = () -> {
     };
     private boolean nextSceneTriggered = false;
 
-    // --- Explosion Constants ---
-    private static final int EXPLOSION_START_X = 215, EXPLOSION_START_Y = 905, EXPLOSION_FRAME_SIZE = 32,
-            EXPLOSION_FRAME_SPACE = 1;
+    private WritableImage[] explosionFrames;
 
-    // --- Score System ---
-    private int score = 0, shotsFired = 0;
-    private int SCORE_PER_HIT = 10, TIME_BONUS_FACTOR = 20, PAR_TIME_SECONDS = 45, LIFE_BONUS = 300;
-    private long stageStartTimeMillis; // Time in ms when stage started
-    private int finalScore = 0; // Save the score after stage completion
-    private javafx.scene.text.Text scoreText; // UI display
+    // (reuse these constants, or place them near your other constants)
+    private static final int EXPLOSION_START_X = 215, EXPLOSION_START_Y = 905;
+    private static final int EXPLOSION_FRAME_SIZE = 32, EXPLOSION_FRAME_SPACE = 1;
 
-    // --- Constructor & Level Drawing ---
-    public GameView() {
+    private int score = 0;
+    private int shotsFired = 0; // Optionally used for advanced bonuses
+    private static final int SCORE_PER_HIT = 100;
+    private static final int TIME_BONUS_FACTOR = 20;
+    private static final int PAR_TIME_SECONDS = 50; // For extra challenge (adjust to fit stage)
+    private static final int LIFE_BONUS = 300;
+
+    private long stageStartTimeMillis;
+    private javafx.scene.text.Text scoreText;
+
+    // Constructor: Sets up background, ground, player, boss, and assets
+    public GameView3() {
+        super();
         root = new Pane();
 
-        // --- Draw background tiles and layers ---
-        drawEnvironment();
-
-        // --- Player construction ---
-        int groundY = 368;
-        int playerY = groundY + GRASS_HEIGHT - 64;
-        player = new Player(100, playerY, "/se233/kellion/assets/Player.png", groundY);
-        root.getChildren().add(player.getView());
-
-        // --- Boss construction ---
-        double bossX = Config.WINDOW_WIDTH - Boss.SPRITE_WIDTH - 55;
-        double bossY = groundY + GRASS_HEIGHT - Boss.SPRITE_HEIGHT - 48;
-        boss = new Boss(bossX, bossY, "/se233/kellion/assets/Defense_Wall.png");
-        boss.getView().setScaleX(2);
-        boss.getView().setScaleY(2);
-        root.getChildren().add(boss.getView());
-
-        // --- Bullet and Explosion Sprite Setup ---
-        Image characterSheet = new Image(
-                getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
-        bulletSprite = new WritableImage(characterSheet.getPixelReader(), 287, 805, 8, 16);
-        bossBulletSprite = new WritableImage(characterSheet.getPixelReader(), 368, 805, 8, 16);
-        loadExplosionFrames(characterSheet);
-
-        // Track stage start time
-        stageStartTimeMillis = System.currentTimeMillis();
-
-        // Score UI
-        scoreText = new javafx.scene.text.Text(12, 30, "Score: 0");
-        scoreText.setStyle("-fx-font-size:20; -fx-fill:white; -fx-font-weight:bold;");
-        scoreText.setStroke(Color.BLACK); // makes white text readable
-        scoreText.setStrokeWidth(2);
-        root.getChildren().add(scoreText);
-
-        updateScoreText();
-
-        if (DEBUG_MODE)
-            updateAllHitboxes();
-    }
-
-    private void drawEnvironment() {
-        // --- Load background tiles ---
-        Image tileset = new Image(getClass().getResource("/se233/kellion/assets/Stage_1.png").toExternalForm());
+        // Load tileset and cut tiles from the spritesheet
+        Image tileset = new Image(getClass().getResource("/se233/kellion/assets/Stage_2.png").toExternalForm());
         WritableImage grassTile = new WritableImage(tileset.getPixelReader(), 0, 0, TILE_SIZE, GRASS_HEIGHT);
         WritableImage soilTile = new WritableImage(tileset.getPixelReader(), 256, 0, TILE_SIZE, SOIL_HEIGHT);
 
+        Image stalac = new Image(getClass().getResource("/se233/kellion/assets/STALACTITE_2.png").toExternalForm());
+        WritableImage stalactiteTile = new WritableImage(stalac.getPixelReader(), 0, 0, 800, Stalactite_HEIGHT);
+
         // Water/wave tiles
-        Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave.png").toExternalForm());
+        Image waveset = new Image(getClass().getResource("/se233/kellion/assets/Wave_2.png").toExternalForm());
         WritableImage waterTile = new WritableImage(waveset.getPixelReader(), 0, 16, TILE_SIZE, TILE_SIZE);
         WritableImage[] waveTiles = {
                 new WritableImage(waveset.getPixelReader(), 0, 0, TILE_SIZE, WATER_TILE_HEIGHT),
@@ -119,9 +86,10 @@ public class GameView {
 
         // Random sky tiles for variation
         WritableImage[] skyTiles = new WritableImage[5];
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++) {
             skyTiles[i] = new WritableImage(tileset.getPixelReader(), 48 + SKY_TILE_SIZE * i, 48, SKY_TILE_SIZE,
                     SKY_TILE_SIZE);
+        }
 
         int groundY = 368;
         int skyRows = groundY / SKY_TILE_SIZE;
@@ -129,17 +97,29 @@ public class GameView {
         Random rand = new Random();
 
         // Draw sky background
-        for (int row = 0; row < skyRows; row++)
+        for (int row = 0; row < skyRows; row++) {
             for (int col = 0; col < skyCols; col++) {
                 ImageView skyView = new ImageView(skyTiles[rand.nextInt(skyTiles.length)]);
                 skyView.setX(col * SKY_TILE_SIZE);
                 skyView.setY(row * SKY_TILE_SIZE);
                 root.getChildren().add(skyView);
             }
+        }
 
-        // Draw grass and soil tiles
+        int cols1 = (int) Math.ceil((double) Config.WINDOW_WIDTH / TILE_SIZE);
+
+        for (int c = 0; c < cols1; c++) {
+            ImageView iv = new ImageView(stalactiteTile);
+            iv.setX(c * 800);
+            iv.setY(0);
+            root.getChildren().add(iv);
+            iv.toFront();
+        }
+
+        // Draw grass and soil tiles (ground)
         for (int col = 0; col < Config.WINDOW_WIDTH / TILE_SIZE; col++) {
             int x = col * TILE_SIZE;
+
             ImageView grassView = new ImageView(grassTile);
             grassView.setX(x);
             grassView.setY(groundY);
@@ -154,6 +134,7 @@ public class GameView {
         // Draw water and waves below ground
         int waterStartY = groundY + GRASS_HEIGHT + SOIL_HEIGHT;
         int cols = Config.WINDOW_WIDTH / TILE_SIZE;
+
         for (int c = 0; c < cols; c++) {
             int X = c * TILE_SIZE;
             int idx = c % 2;
@@ -162,6 +143,7 @@ public class GameView {
             wave.setY(waterStartY);
             root.getChildren().add(wave);
         }
+
         int Y = waterStartY + WATER_TILE_HEIGHT;
         while (Y < Config.WINDOW_HEIGHT) {
             for (int c = 0; c < cols; c++) {
@@ -172,10 +154,88 @@ public class GameView {
             }
             Y += (WATER_TILE_HEIGHT - 1);
         }
+
+        // Create and place the player
+        int playerY = groundY + GRASS_HEIGHT - 64;
+        player = new Player(100, playerY, "/se233/kellion/assets/Player.png", groundY);
+        root.getChildren().add(player.getView());
+
+        // Create and place the boss
+        double bossX = Config.WINDOW_WIDTH - Boss.SPRITE_WIDTH - 55;
+        double bossY = groundY + GRASS_HEIGHT - Boss.SPRITE_HEIGHT - 48;
+        boss = new Boss(bossX, bossY, "/se233/kellion/assets/Defense_Wall.png");
+
+        Image javaSheet = new Image(
+                getClass().getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
+        int sheetW = (int) javaSheet.getWidth();
+        int sheetH = (int) javaSheet.getHeight();
+
+        int frames = 3;
+        int FRAME_W = sheetW / frames; // 102
+        int FRAME_H = sheetH; // 113
+
+        bossFrame1 = new WritableImage(javaSheet.getPixelReader(), 0, 0, FRAME_W, FRAME_H);
+        bossFrame2 = new WritableImage(javaSheet.getPixelReader(), 88, 0, FRAME_W, FRAME_H);
+
+        int TRIM_BOTTOM = 17;
+        int CROP_H = Math.max(1, FRAME_H - TRIM_BOTTOM);
+
+        WritableImage bossIdle = new WritableImage(
+                javaSheet.getPixelReader(),
+                0, // frame 0
+                0,
+                Math.min(FRAME_W, sheetW),
+                Math.min(CROP_H, sheetH));
+
+        boss.getView().setImage(bossFrame1);
+        boss.getView().setScaleX(2);
+        boss.getView().setScaleY(2);
+        boss.getView().setY(boss.getView().getY() - 30);
+        root.getChildren().add(boss.getView());
+
+        // Load bullet sprites
+        Image characterSheet = new Image(
+                getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
+        bulletSprite = new WritableImage(characterSheet.getPixelReader(), 287, 805, 8, 16);
+        bossBulletSprite = new WritableImage(characterSheet.getPixelReader(), 368, 805, 8, 16);
+
+        if (DEBUG_MODE)
+            updateAllHitboxes();
+
+        loadExplosionFrames();
+
+        // Track stage start time (must be after all init)
+        stageStartTimeMillis = System.currentTimeMillis();
+
+        // Score UI
+        scoreText = new javafx.scene.text.Text(12, 30, "Score: 0");
+        scoreText.setStyle("-fx-font-size:20; -fx-fill:white; -fx-font-weight:bold;");
+        scoreText.setStroke(Color.BLACK);
+        scoreText.setStrokeWidth(2);
+        root.getChildren().add(scoreText);
+
+        updateScoreText();
+
     }
 
-    // --- Explosion Animation Loader/Player ---
-    private void loadExplosionFrames(Image characterSheet) {
+    // Bullet creation
+    public void fireBullet(double x, double y, boolean facingRight) {
+        ImageView iv = new ImageView(bulletSprite);
+        iv.setX(x);
+        iv.setY(y);
+        iv.setScaleX(facingRight ? 1 : -1);
+        Bullet bullet = new Bullet(iv, Config.BULLET_SPEED, false);
+        bullets.add(bullet);
+        root.getChildren().add(iv);
+        shotsFired++;
+
+        if (DEBUG_MODE)
+            drawHitbox(iv, "bulletDebug_" + bullets.size(), Color.ORANGE);
+    }
+
+    private void loadExplosionFrames() {
+        Image characterSheet = new Image(
+                getClass().getResource("/se233/kellion/assets/Characters.png").toExternalForm());
         explosionFrames = new WritableImage[3];
         for (int i = 0; i < 3; i++) {
             explosionFrames[i] = new WritableImage(
@@ -194,26 +254,17 @@ public class GameView {
         explosion.setX(x - 16);
         explosion.setY(y - 16);
         root.getChildren().add(explosion);
-        Timeline timeline = new Timeline(
-                new javafx.animation.KeyFrame(Duration.millis(0), e -> explosion.setImage(explosionFrames[0])),
-                new javafx.animation.KeyFrame(Duration.millis(80), e -> explosion.setImage(explosionFrames[1])),
-                new javafx.animation.KeyFrame(Duration.millis(160), e -> explosion.setImage(explosionFrames[2])),
-                new javafx.animation.KeyFrame(Duration.millis(240), e -> root.getChildren().remove(explosion)));
-        timeline.play();
-    }
 
-    // --- Bullet & Boss Bullet Creation ---
-    public void fireBullet(double x, double y, boolean facingRight) {
-        ImageView iv = new ImageView(bulletSprite);
-        iv.setX(x);
-        iv.setY(y);
-        iv.setScaleX(facingRight ? 1 : -1);
-        Bullet bullet = new Bullet(iv, Config.BULLET_SPEED, false);
-        bullets.add(bullet);
-        root.getChildren().add(iv);
-        shotsFired++;
-        if (DEBUG_MODE)
-            drawHitbox(iv, "bulletDebug_" + bullets.size(), Color.ORANGE);
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(0),
+                        e -> explosion.setImage(explosionFrames[0])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(80),
+                        e -> explosion.setImage(explosionFrames[1])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(160),
+                        e -> explosion.setImage(explosionFrames[2])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(240),
+                        e -> root.getChildren().remove(explosion)));
+        timeline.play();
     }
 
     public void fireBossBulletAimed(double x, double y, double targetX, double targetY, double speed) {
@@ -237,7 +288,7 @@ public class GameView {
             drawHitbox(iv, "bossBulletDebug_" + bossBullets.size(), Color.CYAN);
     }
 
-    // --- Bullet Update/Cleanup ---
+    // Bullet updates and cleanup
     public void updateBullets() {
         bullets.forEach(Bullet::update);
         bullets.removeIf(b -> {
@@ -264,7 +315,7 @@ public class GameView {
             updateAllBossBulletHitboxes();
     }
 
-    // --- Main Collision Detection ---
+    // Collision detection (Player–Boss–Bullet)
     public void checkCollisions() {
         List<Bullet> toRemove = new ArrayList<>();
 
@@ -272,17 +323,19 @@ public class GameView {
         if (boss != null && !boss.isDead()) {
             for (Bullet bullet : bullets) {
                 if (CollisionUtil.intersects(bullet.getView(), boss.getView())) {
-                    boss.damage(10);
                     showExplosionEffect(bullet.getView().getX(), bullet.getView().getY());
+                    boss.damage(10);
                     toRemove.add(bullet);
                     root.getChildren().remove(bullet.getView());
                     score += SCORE_PER_HIT;
                     updateScoreText();
+
                     if (boss.isDead())
                         showBossDestroyedSprite();
                 }
             }
         }
+
         // Player colliding with boss body
         if (boss != null && !boss.isDead()) {
             Bounds bossHitbox = boss.getCustomBounds(0, 10);
@@ -302,6 +355,7 @@ public class GameView {
                 root.getChildren().add(r);
             }
         }
+
         // Boss bullets hitting player
         List<Bullet> bossBulletsToRemove = new ArrayList<>();
         for (Bullet bullet : bossBullets) {
@@ -313,14 +367,14 @@ public class GameView {
                 break; // one hit per frame
             }
         }
+
         bossBullets.removeAll(bossBulletsToRemove);
         bullets.removeAll(toRemove);
-
         if (DEBUG_MODE)
             updateAllHitboxes();
     }
 
-    // --- Boss Action / Firing ---
+    // Boss behavior and attack cycle
     public void updateBoss() {
         if (boss == null || boss.isDead()) {
             checkLevelTransition();
@@ -334,46 +388,63 @@ public class GameView {
             double bulletX = boss.getView().getX() + boss.getView().getBoundsInParent().getWidth() * 0.10;
             double bulletY = boss.getView().getY() + boss.getView().getBoundsInParent().getHeight() * 0.30;
 
+            int[][] OFFSETS = {
+                    { -20, +100 }, { +50, +100 }, { -20, -120 }, { +50, -120 }
+            };
+
             Bounds p = player.getHitboxBounds();
             double tx = p.getMinX() + p.getWidth() / 2.0;
             double ty = p.getMinY() + p.getHeight();
 
             double s = Config.BOSS_BULLET_SPEED + 1;
-            fireBossBulletAimed(bulletX - 20, bulletY - 20, tx, ty, s);
-            fireBossBulletAimed(bulletX + 30, bulletY - 15, tx, ty, s);
+            boss.getView().setImage(bossFrame2);
+            for (int[] d : OFFSETS) {
+                fireBossBulletAimed(bulletX + d[0], bulletY + d[1], tx, ty, s);
+            }
 
+            javafx.animation.Timeline revert = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(300),
+                            e -> boss.getView().setImage(bossFrame1)));
+            revert.play();
             bossFireCounter = 0;
         }
+
         if (DEBUG_MODE)
             updateAllHitboxes();
         checkLevelTransition();
     }
 
-    // --- Boss Destruction Effect/Transition ---
+    // Change boss sprite to destroyed form
     private void showBossDestroyedSprite() {
-        Image src = new Image(getClass().getResource("/se233/kellion/assets/Defense_Wall.png").toExternalForm());
-        WritableImage destroyedSprite = new WritableImage(src.getPixelReader(), 113, 96, 110, 64);
+        Image src = new Image(getClass().getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
+        WritableImage destroyedSprite = new WritableImage(src.getPixelReader(), 177, 0, 85, 144);
         boss.getView().setImage(destroyedSprite);
         boss.getView().setScaleX(2.0);
         boss.getView().setScaleY(2.0);
-        boss.getView().setY(boss.getView().getY() + 146);
+        boss.getView().setX(boss.getView().getX());
+        boss.getView().setY(boss.getView().getY());
         player.getView().toFront();
 
         boss1Defeated = true;
 
         long elapsedMillis = System.currentTimeMillis() - stageStartTimeMillis;
-        int elapsedSeconds = (int) elapsedMillis / 1000;
-        int timeBonus = Math.max(0, (PAR_TIME_SECONDS - elapsedSeconds) * TIME_BONUS_FACTOR);
-        int liveBonus = Math.max(0, player.getLives() * LIFE_BONUS);
+        int elapsedSeconds = (int) (elapsedMillis / 1000);
 
-        score += timeBonus + liveBonus;
+        int timeBonus = Math.max(0, (PAR_TIME_SECONDS - elapsedSeconds) * TIME_BONUS_FACTOR);
+        int livesBonus = Math.max(0, player.getLives() * LIFE_BONUS);
+
+        score += timeBonus + livesBonus;
         updateScoreText();
     }
 
-    // --- Level Transition Logic ---
+    private void updateScoreText() {
+        scoreText.setText("Score: " + score);
+    }
+
     private void checkLevelTransition() {
         if (!boss1Defeated || nextSceneTriggered)
             return;
+
         double playerRight = player.getView().getX() + player.getView().getFitWidth();
         if (playerRight >= Config.WINDOW_WIDTH - 4) {
             nextSceneTriggered = true;
@@ -384,7 +455,62 @@ public class GameView {
         }
     }
 
-    // --- Player Death & Respawn/Lives ---
+    // Debug helpers: draw rectangles around game objects
+    private void drawHitbox(Node node, String id, Color color) {
+        if (!DEBUG_HITBOX || node == null)
+            return;
+        Bounds b = node.getBoundsInParent();
+
+        Rectangle r = new Rectangle(b.getMinX(), b.getMinY(), b.getWidth(), b.getHeight());
+        r.setFill(Color.color(color.getRed(), color.getGreen(), color.getBlue(), 0.25));
+        r.setStroke(color);
+        r.setStrokeWidth(1.5);
+        r.setId(id);
+
+        root.getChildren().add(r);
+    }
+
+    private void updateAllHitboxes() {
+        if (!DEBUG_HITBOX) {
+            root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
+                    (n.getId().startsWith("debug") || n.getId().contains("bulletDebug")));
+            return;
+        }
+
+        root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
+                (n.getId().startsWith("debug") || n.getId().contains("bulletDebug")));
+
+        drawHitbox(player.getView(), "debugPlayer", Color.LIME);
+        if (boss != null && !boss.isDead())
+            drawHitbox(boss.getView(), "debugBoss", Color.RED);
+
+        for (int i = 0; i < bullets.size(); i++)
+            drawHitbox(bullets.get(i).getView(), "bulletDebug_" + i, Color.ORANGE);
+    }
+
+    private void updateAllBossBulletHitboxes() {
+        if (!DEBUG_HITBOX) {
+            root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
+                    n.getId().contains("bossBulletDebug"));
+            return;
+        }
+
+        root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
+                n.getId().contains("bossBulletDebug"));
+
+        for (int i = 0; i < bossBullets.size(); i++)
+            drawHitbox(bossBullets.get(i).getView(), "bossBulletDebug_" + i, Color.CYAN);
+    }
+
+    private void respawnPlayer() {
+        player.getView().setX(100);
+        player.getView().setY(320);
+        player.resetToIdle();
+        player.getView().setOpacity(1.0);
+        playerDead = false;
+    }
+
+    // Player death
     public void killPlayer() {
         if (!playerDead) {
             playerDead = true;
@@ -405,56 +531,7 @@ public class GameView {
         }
     }
 
-    private void respawnPlayer() {
-        player.getView().setX(100);
-        player.getView().setY(320);
-        player.resetToIdle();
-        player.getView().setOpacity(1.0);
-        playerDead = false;
-    }
-
-    // --- Debugging Helpers ---
-    private void drawHitbox(Node node, String id, Color color) {
-        if (!DEBUG_HITBOX || node == null)
-            return;
-        Bounds b = node.getBoundsInParent();
-        Rectangle r = new Rectangle(b.getMinX(), b.getMinY(), b.getWidth(), b.getHeight());
-        r.setFill(Color.color(color.getRed(), color.getGreen(), color.getBlue(), 0.25));
-        r.setStroke(color);
-        r.setStrokeWidth(1.5);
-        r.setId(id);
-        root.getChildren().add(r);
-    }
-
-    private void updateAllHitboxes() {
-        if (!DEBUG_HITBOX) {
-            root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
-                    (n.getId().startsWith("debug") || n.getId().contains("bulletDebug")));
-            return;
-        }
-        root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
-                (n.getId().startsWith("debug") || n.getId().contains("bulletDebug")));
-
-        drawHitbox(player.getView(), "debugPlayer", Color.LIME);
-        if (boss != null && !boss.isDead())
-            drawHitbox(boss.getView(), "debugBoss", Color.RED);
-        for (int i = 0; i < bullets.size(); i++)
-            drawHitbox(bullets.get(i).getView(), "bulletDebug_" + i, Color.ORANGE);
-    }
-
-    private void updateAllBossBulletHitboxes() {
-        if (!DEBUG_HITBOX) {
-            root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
-                    n.getId().contains("bossBulletDebug"));
-            return;
-        }
-        root.getChildren().removeIf(n -> n instanceof Rectangle && n.getId() != null &&
-                n.getId().contains("bossBulletDebug"));
-        for (int i = 0; i < bossBullets.size(); i++)
-            drawHitbox(bossBullets.get(i).getView(), "bossBulletDebug_" + i, Color.CYAN);
-    }
-
-    // --- Public Getters/Setters for Integration ---
+    // Getters
     public Pane getRoot() {
         return root;
     }
@@ -467,6 +544,10 @@ public class GameView {
         return bullets;
     }
 
+    private void setBoss(Boss b) {
+        this.boss = b;
+    }
+
     public Boss getBoss() {
         return boss;
     }
@@ -476,16 +557,11 @@ public class GameView {
     }
 
     public void setOnNextScene(Runnable r) {
-        this.onNextScene = r != null ? r : () -> {
+        this.onNextScene = (r != null) ? r : () -> {
         };
     }
 
     public boolean isBoss1Defeated() {
         return boss1Defeated;
-    }
-
-    // Helpers
-    private void updateScoreText() {
-        scoreText.setText("Score: " + score);
     }
 }

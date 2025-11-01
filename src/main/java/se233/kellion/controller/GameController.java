@@ -24,7 +24,8 @@ public class GameController {
                 case W, UP, SPACE -> player.jump();
                 case J -> view.fireBullet(player.getGunX(), player.getGunY(), player.isFacingRight());
                 case DOWN, CONTROL -> player.prone();
-                default -> {}
+                default -> {
+                }
             }
         });
 
@@ -33,13 +34,14 @@ public class GameController {
                 case LEFT, A -> left = false;
                 case RIGHT, D -> right = false;
                 case DOWN, CONTROL -> player.standUp();
-                default -> {}
+                default -> {
+                }
             }
         });
     }
 
     public void startGameLoop() {
-        if (gameLoop != null) {            // กันสตาร์ทซ้ำ
+        if (gameLoop != null) { // กันสตาร์ทซ้ำ
             return;
         }
         gameLoop = new AnimationTimer() {
@@ -52,6 +54,7 @@ public class GameController {
         System.out.println("Game loop started");
 
     }
+
     public void stopGameLoop() {
         if (gameLoop != null) {
             gameLoop.stop();
@@ -64,9 +67,12 @@ public class GameController {
         if (!view.isPlayerDead()) {
             player.update();
 
-            if (left) player.moveLeft();
-            else if (right) player.moveRight();
-            else player.stopMoving();
+            if (left)
+                player.moveLeft();
+            else if (right)
+                player.moveRight();
+            else
+                player.stopMoving();
         }
 
         view.updateBullets();

@@ -1,11 +1,13 @@
 package se233.kellion.view;
 
+import javafx.animation.PauseTransition;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.image.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import se233.kellion.model.Boss;
 import se233.kellion.model.Bullet;
 import se233.kellion.model.Player;
@@ -24,6 +26,8 @@ public class GameView2 extends GameView {
     private final List<Bullet> bossBullets = new ArrayList<>();
     private final WritableImage bulletSprite;
     private final WritableImage bossBulletSprite;
+    private WritableImage bossFrame1;
+    private WritableImage bossFrame2;
 
     // Tile and layout constants
     private static final int TILE_SIZE = 32;
@@ -48,6 +52,16 @@ public class GameView2 extends GameView {
     // (reuse these constants, or place them near your other constants)
     private static final int EXPLOSION_START_X = 215, EXPLOSION_START_Y = 905;
     private static final int EXPLOSION_FRAME_SIZE = 32, EXPLOSION_FRAME_SPACE = 1;
+
+    private int score = 0;
+    private int shotsFired = 0;
+    private static final int SCORE_PER_HIT = 100;
+    private static final int TIME_BONUS_FACTOR = 20; // Adjust as you like
+    private static final int PAR_TIME_SECONDS = 45;
+    private static final int LIFE_BONUS = 300;
+
+    private long stageStartTimeMillis;
+    private javafx.scene.text.Text scoreText;
 
     // Constructor: Sets up background, ground, player, boss, and assets
     public GameView2() {
@@ -159,6 +173,9 @@ public class GameView2 extends GameView {
         int FRAME_W = sheetW / frames; // 102
         int FRAME_H = sheetH; // 113
 
+        bossFrame1 = new WritableImage(javaSheet.getPixelReader(), 0, 0, FRAME_W, FRAME_H - 17);
+        bossFrame2 = new WritableImage(javaSheet.getPixelReader(), 112, 0, FRAME_W, 113);
+
         int TRIM_BOTTOM = 17;
         int CROP_H = Math.max(1, FRAME_H - TRIM_BOTTOM);
 
@@ -169,11 +186,9 @@ public class GameView2 extends GameView {
                 Math.min(FRAME_W, sheetW),
                 Math.min(CROP_H, sheetH));
 
-        boss.getView().setImage(bossIdle);
+        boss.getView().setImage(bossFrame1);
         boss.getView().setScaleX(2);
         boss.getView().setScaleY(2);
-
-        double trimmed = (FRAME_H - CROP_H) * boss.getView().getScaleY();
         boss.getView().setY(boss.getView().getY() - 30);
         root.getChildren().add(boss.getView());
 
@@ -187,6 +202,19 @@ public class GameView2 extends GameView {
             updateAllHitboxes();
 
         loadExplosionFrames();
+
+        // Track stage start time
+        stageStartTimeMillis = System.currentTimeMillis();
+
+        // Score UI
+        scoreText = new javafx.scene.text.Text(12, 30, "Score: 0");
+        scoreText.setStyle("-fx-font-size:20; -fx-fill:white; -fx-font-weight:bold;");
+        scoreText.setStroke(Color.BLACK); // makes white text readable
+        scoreText.setStrokeWidth(2);
+        root.getChildren().add(scoreText);
+
+        updateScoreText();
+
     }
 
     // Bullet creation
@@ -198,6 +226,7 @@ public class GameView2 extends GameView {
         Bullet bullet = new Bullet(iv, Config.BULLET_SPEED, false);
         bullets.add(bullet);
         root.getChildren().add(iv);
+        shotsFired++;
 
         if (DEBUG_MODE)
             drawHitbox(iv, "bulletDebug_" + bullets.size(), Color.ORANGE);
@@ -218,30 +247,40 @@ public class GameView2 extends GameView {
     }
 
     private void showExplosionEffect(double x, double y) {
-    ImageView explosion = new ImageView(explosionFrames[0]);
-    explosion.setFitWidth(32);
-    explosion.setFitHeight(32);
-    explosion.setX(x - 16);
-    explosion.setY(y - 16);
-    root.getChildren().add(explosion);
+        ImageView explosion = new ImageView(explosionFrames[0]);
+        explosion.setFitWidth(32);
+        explosion.setFitHeight(32);
+        explosion.setX(x - 16);
+        explosion.setY(y - 16);
+        root.getChildren().add(explosion);
 
-    javafx.animation.Timeline timeline = new javafx.animation.Timeline(
-        new javafx.animation.KeyFrame(javafx.util.Duration.millis(0),     e -> explosion.setImage(explosionFrames[0])),
-        new javafx.animation.KeyFrame(javafx.util.Duration.millis(80),    e -> explosion.setImage(explosionFrames[1])),
-        new javafx.animation.KeyFrame(javafx.util.Duration.millis(160),   e -> explosion.setImage(explosionFrames[2])),
-        new javafx.animation.KeyFrame(javafx.util.Duration.millis(240),   e -> root.getChildren().remove(explosion))
-    );
-    timeline.play();
-}
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(0),
+                        e -> explosion.setImage(explosionFrames[0])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(80),
+                        e -> explosion.setImage(explosionFrames[1])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(160),
+                        e -> explosion.setImage(explosionFrames[2])),
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(240),
+                        e -> root.getChildren().remove(explosion)));
+        timeline.play();
+    }
 
-
-    public void fireBossBullet(double x, double y, boolean toLeft) {
+    public void fireBossBulletAimed(double x, double y, double targetX, double targetY, double speed) {
         ImageView iv = new ImageView(bossBulletSprite);
         iv.setX(x);
         iv.setY(y);
-        iv.setScaleX(toLeft ? -1 : 1);
-        Bullet bullet = new Bullet(iv, Config.BOSS_BULLET_SPEED, true);
-        bossBullets.add(bullet);
+
+        double dx = targetX - x, dy = targetY - y;
+        double len = Math.hypot(dx, dy);
+        if (len == 0)
+            len = 1;
+        double vx = (dx / len) * speed;
+        double vy = (dy / len) * speed;
+
+        iv.setScaleX(vx >= 0 ? 1 : -1);
+        Bullet b = new Bullet(iv, vx, vy, true);
+        bossBullets.add(b);
         root.getChildren().add(iv);
 
         if (DEBUG_MODE)
@@ -287,6 +326,8 @@ public class GameView2 extends GameView {
                     boss.damage(10);
                     toRemove.add(bullet);
                     root.getChildren().remove(bullet.getView());
+                    score += SCORE_PER_HIT;
+                    updateScoreText();
 
                     if (boss.isDead())
                         showBossDestroyedSprite();
@@ -328,7 +369,6 @@ public class GameView2 extends GameView {
 
         bossBullets.removeAll(bossBulletsToRemove);
         bullets.removeAll(toRemove);
-
         if (DEBUG_MODE)
             updateAllHitboxes();
     }
@@ -343,10 +383,25 @@ public class GameView2 extends GameView {
 
         bossFireCounter++;
         if (bossFireCounter >= Config.BOSS_FIRE_INTERVAL && !playerDead) {
-            double bulletX = boss.getView().getX();
-            double bulletY = boss.getView().getY() + boss.getView().getBoundsInParent().getHeight() / 2;
-            fireBossBullet(bulletX - 50, bulletY - 80, true);
-            fireBossBullet(bulletX, bulletY - 80, true);
+
+            double bulletX = boss.getView().getX() + boss.getView().getBoundsInParent().getWidth() * 0.10;
+            double bulletY = boss.getView().getY() + boss.getView().getBoundsInParent().getHeight() * 0.30;
+
+            Bounds p = player.getHitboxBounds();
+            double tx = p.getMinX() + p.getWidth() / 2.0;
+            double ty = p.getMinY() + p.getHeight();
+
+            double s = Config.BOSS_BULLET_SPEED + 1;
+            boss.getView().setImage(bossFrame2);
+            fireBossBulletAimed(bulletX - 20, bulletY - 20, tx, ty, s);
+            fireBossBulletAimed(bulletX - 10, bulletY - 20, tx, ty, s);
+            fireBossBulletAimed(bulletX + 0, bulletY - 20, tx, ty, s);
+            fireBossBulletAimed(bulletX + 10, bulletY - 20, tx, ty, s);
+
+            javafx.animation.Timeline revert = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(300),
+                            e -> boss.getView().setImage(bossFrame1)));
+            revert.play();
             bossFireCounter = 0;
         }
 
@@ -367,17 +422,32 @@ public class GameView2 extends GameView {
         player.getView().toFront();
 
         boss1Defeated = true;
+
+        long elapsedMillis = System.currentTimeMillis() - stageStartTimeMillis;
+        int elapsedSeconds = (int) (elapsedMillis / 1000);
+
+        // Time bonus: max(0, (45 - time) * 20)
+        int timeBonus = Math.max(0, (PAR_TIME_SECONDS - elapsedSeconds) * TIME_BONUS_FACTOR);
+
+        // Lives bonus: 300 per remaining life
+        int livesBonus = Math.max(0, player.getLives() * LIFE_BONUS);
+
+        score += timeBonus + livesBonus;
+
+        updateScoreText();
+
     }
 
     private void checkLevelTransition() {
-        if (!boss1Defeated)
+        if (!boss1Defeated || nextSceneTriggered)
             return;
 
         double playerRight = player.getView().getX() + player.getView().getFitWidth();
         if (playerRight >= Config.WINDOW_WIDTH - 4) {
             nextSceneTriggered = true;
             Runnable go = onNextScene;
-            onNextScene.run();
+            onNextScene = () -> {
+            };
             go.run();
         }
     }
@@ -429,12 +499,32 @@ public class GameView2 extends GameView {
             drawHitbox(bossBullets.get(i).getView(), "bossBulletDebug_" + i, Color.CYAN);
     }
 
+    private void respawnPlayer() {
+        player.getView().setX(100);
+        player.getView().setY(320);
+        player.resetToIdle();
+        player.getView().setOpacity(1.0);
+        playerDead = false;
+    }
+
     // Player death
     public void killPlayer() {
         if (!playerDead) {
             playerDead = true;
-            player.getView().setOpacity(0.4); // fade effect
-            System.out.println("Player killed by boss bullet!");
+            player.loseLife(); // decrement player lives
+
+            player.playDeathAnimation();
+            System.out.println("Player killed by boss bullet! Lives left: " + player.getLives());
+
+            if (player.getLives() > 0) {
+                PauseTransition delay = new PauseTransition(
+                        Duration.millis(420));
+                delay.setOnFinished(_ -> respawnPlayer());
+                delay.play();
+            } else {
+                System.out.println("Game Over!");
+                // Optionally show Game Over screen/UI
+            }
         }
     }
 
@@ -471,4 +561,9 @@ public class GameView2 extends GameView {
     public boolean isBoss1Defeated() {
         return boss1Defeated;
     }
+
+    private void updateScoreText() {
+        scoreText.setText("Score: " + score);
+    }
+
 }

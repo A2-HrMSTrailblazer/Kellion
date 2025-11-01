@@ -55,8 +55,10 @@ public class Player {
     };
     private int lives = 3;
 
-    private static final double HITBOX_SCALE_X = 0.3; // 80% ของกว้างจริง
+    private static final double HITBOX_SCALE_X = 0.3;
     private static final double HITBOX_SCALE_Y = 0.4;
+    private static final double HITBOX_OFFSET_X = 5.0;
+    private static final double HITBOX_OFFSET_Y = 6.0;
 
     public Player(double x, double y, String imagePath, double groundY) {
         this.groundY = groundY;
@@ -131,8 +133,8 @@ public class Player {
         Bounds b = getView().getBoundsInParent();
         double w = b.getWidth() * HITBOX_SCALE_X;
         double h = b.getHeight() * HITBOX_SCALE_Y;
-        double minX = b.getMinX() + (b.getWidth() - w) / 2.0;
-        double minY = b.getMinY() + (b.getHeight() - h) / 2.0;
+        double minX = b.getMinX() + (b.getWidth()  - w) / 2.0 + HITBOX_OFFSET_X;
+        double minY = b.getMinY() + (b.getHeight() - h) / 2.0 + HITBOX_OFFSET_Y;
         return new javafx.geometry.BoundingBox(minX, minY, w, h);
     }
 
@@ -244,24 +246,16 @@ public class Player {
 
     public void playDeathAnimation() {
         view.setViewport(DEAD_FRAME_RECTS[0]);
-        view.setFitWidth(DEAD_FRAME_RECTS[0].getWidth());
-        view.setFitHeight(DEAD_FRAME_RECTS[0].getHeight());
 
         javafx.animation.Timeline timeline = new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(javafx.util.Duration.millis(0), e -> {
                     view.setViewport(DEAD_FRAME_RECTS[0]);
-                    view.setFitWidth(DEAD_FRAME_RECTS[0].getWidth());
-                    view.setFitHeight(DEAD_FRAME_RECTS[0].getHeight());
                 }),
                 new javafx.animation.KeyFrame(javafx.util.Duration.millis(110), e -> {
                     view.setViewport(DEAD_FRAME_RECTS[1]);
-                    view.setFitWidth(DEAD_FRAME_RECTS[1].getWidth());
-                    view.setFitHeight(DEAD_FRAME_RECTS[1].getHeight());
                 }),
                 new javafx.animation.KeyFrame(javafx.util.Duration.millis(220), e -> {
                     view.setViewport(DEAD_FRAME_RECTS[2]);
-                    view.setFitWidth(DEAD_FRAME_RECTS[2].getWidth());
-                    view.setFitHeight(DEAD_FRAME_RECTS[2].getHeight());
                 }));
         timeline.play();
     }
