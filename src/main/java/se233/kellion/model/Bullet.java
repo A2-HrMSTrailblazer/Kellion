@@ -3,6 +3,7 @@ package se233.kellion.model;
 import javafx.scene.image.ImageView;
 
 public class Bullet {
+    private int damage = 10;
     private ImageView view;
     private int speed;
     private boolean fromBoss;
@@ -39,4 +40,6 @@ public class Bullet {
     public boolean isFromBoss() {
         return fromBoss;
     }
+    public int getDamage() { return damage; }
+    public void setDamage(int d) { this.damage = d; }
 }

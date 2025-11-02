@@ -32,11 +32,24 @@ public class GameScene {
             this.gameOver.show(gameRoot);
         });
 
-        // layer: game + start + gameover
-        this.root  = new StackPane(gameRoot, this.gameMenu.getStartOverlay(), this.gameOver.getOverlay());
+        // layer: game + start + gameover + pause(ใหม่)
+        this.root  = new StackPane(
+                gameRoot,
+                this.gameMenu.getStartOverlay(),
+                this.gameOver.getOverlay(),
+                this.gameMenu.getPauseOverlay() // <<< ใส่ pause overlay เข้า stack
+        );
         this.scene = new Scene(this.root, 800, 525);
 
         this.controller.attachInputHandlersToScene(this.scene);
+
+        // ติดตั้ง ESC ให้ทำงานเป็น Pause/Resume และเบลอที่ gameRoot
+        this.gameMenu.install(this.scene, gameRoot);
+        this.gameMenu.setOnPause(() -> this.controller.stopGameLoop());
+        this.gameMenu.setOnResume(() -> {
+            this.controller.startGameLoop();
+            Platform.runLater(gameRoot::requestFocus);
+        });
 
         // start
         this.gameMenu.setOnStart(() -> {
@@ -78,10 +91,24 @@ public class GameScene {
             this.gameOver.show(gameRoot);
         });
 
-        this.root  = new StackPane(gameRoot, this.gameMenu.getStartOverlay(), this.gameOver.getOverlay());
+        // layer: game + start + gameover + pause(ใหม่)
+        this.root  = new StackPane(
+                gameRoot,
+                this.gameMenu.getStartOverlay(),
+                this.gameOver.getOverlay(),
+                this.gameMenu.getPauseOverlay() // <<< ใส่ pause overlay เข้า stack
+        );
         this.scene = new Scene(this.root, 800, 525);
 
         this.controller.attachInputHandlersToScene(this.scene);
+
+        // ติดตั้ง ESC ให้ทำงานเป็น Pause/Resume และเบลอที่ gameRoot
+        this.gameMenu.install(this.scene, gameRoot);
+        this.gameMenu.setOnPause(() -> this.controller.stopGameLoop());
+        this.gameMenu.setOnResume(() -> {
+            this.controller.startGameLoop();
+            Platform.runLater(gameRoot::requestFocus);
+        });
 
         this.gameMenu.setOnStart(() -> {
             this.gameMenu.getStartOverlay().setVisible(false);
@@ -120,8 +147,17 @@ public class GameScene {
             this.gameOver.show(newRoot);
         });
 
+        // ต้องใส่ pause overlay กลับเข้ากองทุกครั้งที่รีเซ็ต
         ((StackPane) this.scene.getRoot()).getChildren()
-                .setAll(newRoot, this.gameMenu.getStartOverlay(), this.gameOver.getOverlay());
+                .setAll(newRoot, this.gameMenu.getStartOverlay(), this.gameOver.getOverlay(), this.gameMenu.getPauseOverlay());
+
+        // ติดตั้ง ESC ให้ blurTarget ตัวใหม่ (newRoot) + ผูก pause/resume กับ controller ตัวใหม่
+        this.gameMenu.install(this.scene, newRoot);
+        this.gameMenu.setOnPause(() -> this.controller.stopGameLoop());
+        this.gameMenu.setOnResume(() -> {
+            this.controller.startGameLoop();
+            Platform.runLater(newRoot::requestFocus);
+        });
 
         this.gameOver.hide(newRoot);
         this.controller.startGameLoop();

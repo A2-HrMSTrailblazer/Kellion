@@ -58,17 +58,23 @@ public class GameOverMenu {
         bg.setFitHeight(height);
 
         Image retryImg = new Image(getClass().getResource("/se233/kellion/assets/Retry.png").toExternalForm());
+        Image retryHover = new Image(getClass().getResource("/se233/kellion/assets/Retry_2.png").toExternalForm());
 
         ImageView retry = new ImageView(retryImg);
-        retry.setPreserveRatio(true);
-        retry.setFitWidth(240);
-
-        retry.setCursor(javafx.scene.Cursor.HAND);
-        retry.setOnMouseClicked(e -> onRetry.run());
 
         VBox buttons = new VBox(16, retry);
         buttons.setAlignment(Pos.CENTER);
         buttons.setPadding(new Insets(24,12,12,12));
+
+        retry.setOnMouseEntered(e -> retry.setImage(retryHover));
+        retry.setOnMouseExited (e -> retry.setImage(retryImg));
+
+        retry.setOnMousePressed(e -> retry.setTranslateY(retry.getTranslateY() + 1));
+        retry.setOnMouseReleased(e -> retry.setTranslateY(retry.getTranslateY() - 1));
+
+        retry.setCursor(javafx.scene.Cursor.HAND);
+
+        retry.setOnMouseClicked(e -> onRetry.run());
 
         StackPane wrapper = new StackPane(dim, bg, buttons);
         StackPane.setAlignment(buttons, Pos.CENTER);

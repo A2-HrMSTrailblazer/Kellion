@@ -27,15 +27,17 @@ public class Minion {
     private int dir = 1; // 1=ขวา, -1=ซ้าย
 
     private int hp;
+    private int maxHp;
     private long lastShotNs = 0;
+    private boolean paused = false;
 
-    private static WritableImage ENEMY_BULLET_SPRITE;
-    private static WritableImage enemyBulletSprite() {
+    private static Image ENEMY_BULLET_SPRITE;
+
+    private static Image enemyBulletSprite() {
         if (ENEMY_BULLET_SPRITE == null) {
-            var url = Minion.class.getResource("/se233/kellion/assets/Bullet_M1.png");
-            if (url == null) throw new IllegalStateException("Characters.png not found");
-            var sheet = new Image(url.toExternalForm());
-            ENEMY_BULLET_SPRITE = new WritableImage(sheet.getPixelReader(), 0, 0, 8, 8);
+            var url = Minion.class.getResource("/se233/kellion/assets/Bullet_M1.gif");
+            if (url == null) throw new IllegalStateException("Bullet_M1.gif not found");
+            ENEMY_BULLET_SPRITE = new Image(url.toExternalForm());
         }
         return ENEMY_BULLET_SPRITE;
     }
@@ -50,7 +52,8 @@ public class Minion {
         this.skin = skin;
         this.cfg = cfg;
         this.kind = kind;
-        this.hp = cfg.hp;
+        this.maxHp = Math.max(1, cfg.hp);
+        this.hp = this.maxHp;
 
         view.setImage(skin.walkLeft());
         view.setPreserveRatio(true);
@@ -63,6 +66,8 @@ public class Minion {
     public ImageView getView() { return view; }
     public boolean isDead() { return state == State.DEAD; }
     public Bounds getBounds() { return view.getBoundsInParent(); }
+    public int getHp()     { return hp; }
+    public int getMaxHp()  { return maxHp; }
 
     public void damage(int d) {
         if (state == State.DEAD) return;
@@ -75,6 +80,7 @@ public class Minion {
 
     public void update(Player player, List enemyBullets, Pane layerRoot, long nowNs) {
         if (state == State.DEAD) return;
+        if (paused) return;
 
         Bounds pb = player.getView().getBoundsInParent();
         double px = pb.getMinX() + pb.getWidth() * 0.5;
@@ -120,7 +126,7 @@ public class Minion {
         }
     }
 
-    private void tryShootToward(double tx, double ty, List enemyBullets, Pane layerRoot, long nowNs) {
+    private void tryShootToward(double tx, double ty, List<Bullet> enemyBullets, Pane layerRoot, long nowNs) {
         if (nowNs - lastShotNs < cfg.fireIntervalNs) return;
         lastShotNs = nowNs;
 
@@ -129,11 +135,16 @@ public class Minion {
         double spawnY = b.getMinY() + b.getHeight() * 0.35;
 
         ImageView bulletView = new ImageView(enemyBulletSprite());
+        bulletView.setFitWidth(8);
+        bulletView.setFitHeight(8);
 
         double speed = Config.BOSS_BULLET_SPEED -0.2;
         BulletManager.fireBossBulletAimed(enemyBullets, layerRoot, spawnX, spawnY, tx, ty, speed, bulletView);
         bulletView.setScaleX((tx - spawnX) >= 0 ? 1 : -1);
     }
     public MinionKind getKind() { return kind; }
+    public void setPaused(boolean value) {
+        this.paused = value;
+    }
 }
 

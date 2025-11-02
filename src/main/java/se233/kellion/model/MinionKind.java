@@ -7,12 +7,12 @@ public enum MinionKind {
             28, MinionConfig.defaultM1()),
     M2("/se233/kellion/assets/M2_walk.gif",
             "/se233/kellion/assets/M2_walk2.gif",
-            "/se233/kellion/assets/Bullet_M2.png",
+            "/se233/kellion/assets/Bullet_M2.gif",
             32,
             MinionConfig.defaultM2()),
     M3("/se233/kellion/assets/M3_walk.gif",
             "/se233/kellion/assets/M3_walk2.gif",
-            "/se233/kellion/assets/Bullet_M3.png",
+            "/se233/kellion/assets/Bullet_M3.gif",
             32,
             MinionConfig.defaultM3()
     );

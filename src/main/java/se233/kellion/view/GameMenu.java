@@ -14,17 +14,21 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+import javafx.event.EventHandler;
 
 public class GameMenu {
-
     private final int width, height;
     private final String titleImagePath;
 
     private final StackPane startOverlay;
     private final StackPane pauseOverlay;
+    private Node pauseBlurTarget;
 
     private boolean started = false;
     private boolean paused  = false;
+    private EventHandler<KeyEvent> escHandler;
 
     private Runnable onStart  = () -> {};
     private Runnable onPause  = () -> {};
@@ -54,11 +58,17 @@ public class GameMenu {
 
     // set ESC toggle + blurTarget when pause
     public void install(Scene scene, Node blurTarget) {
-        scene.setOnKeyPressed(e -> {
+        this.pauseBlurTarget = blurTarget;        // ถ้ามี handler เก่าอยู่กับ scene นี้ ให้เอาออกก่อน
+        if (escHandler != null) {
+            scene.removeEventHandler(KeyEvent.KEY_PRESSED, escHandler);
+        }
+        escHandler = e -> {
             if (e.getCode() == KeyCode.ESCAPE && started) {
                 togglePause(blurTarget);
+                e.consume();
             }
-        });
+        };
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, escHandler);
     }
 
     public void togglePause(Node blurTarget) {
@@ -68,6 +78,7 @@ public class GameMenu {
     public void pause(Node blurTarget) {
         paused = true;
         pauseOverlay.setVisible(true);
+        pauseOverlay.setMouseTransparent(false);
         if (blurTarget != null) blurTarget.setEffect(new BoxBlur(3,3,1));
         onPause.run();
     }
@@ -75,6 +86,7 @@ public class GameMenu {
     public void resume(Node blurTarget) {
         paused = false;
         pauseOverlay.setVisible(false);
+        pauseOverlay.setMouseTransparent(true);
         if (blurTarget != null) blurTarget.setEffect(null);
         onResume.run();
     }
@@ -137,11 +149,13 @@ public class GameMenu {
 
         Image contDefault = new Image(getClass().getResource("/se233/kellion/assets/CONTINUE.png").toExternalForm());
         Image contHover   = new Image(getClass().getResource("/se233/kellion/assets/CONTINUE_2.png").toExternalForm());
-        Image quitDefault = new Image(getClass().getResource("/se233/kellion/assets/QUIT.png").toExternalForm());
+        Image quitDefault = new Image(getClass().getResource("/se233/kellion/assets/Title_QUIT.png").toExternalForm());
         Image quitHover   = new Image(getClass().getResource("/se233/kellion/assets/Title_QUIT_2.png").toExternalForm());
 
         ImageView contIV = new ImageView(contDefault);
         ImageView quitIV = new ImageView(quitDefault);
+        contIV.setFitHeight(55);
+        quitIV.setFitHeight(50);
 
         VBox box = new VBox(14, contIV, quitIV);
         box.setAlignment(Pos.CENTER);
@@ -160,11 +174,16 @@ public class GameMenu {
         contIV.setCursor(javafx.scene.Cursor.HAND);
         quitIV.setCursor(javafx.scene.Cursor.HAND);
 
-        contIV.setOnMouseClicked(e -> onResume.run());
+        contIV.setOnMouseClicked(e -> {
+                    onResume.run();
+                    resume(pauseBlurTarget);
+                });
         quitIV.setOnMouseClicked(e -> onQuit.run());
 
         StackPane wrapper = new StackPane(dim, box);
         wrapper.setPickOnBounds(true);
         return wrapper;
     }
+    public void markStarted() { this.started = true; }
 }
+

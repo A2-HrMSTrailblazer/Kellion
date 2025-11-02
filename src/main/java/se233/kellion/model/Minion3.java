@@ -34,7 +34,7 @@ public class Minion3 extends Minion {
 
         walkLeft  = new Image(getClass().getResource("/se233/kellion/assets/M3_walk.gif").toExternalForm());
         walkRight = new Image(getClass().getResource("/se233/kellion/assets/M3_walk2.gif").toExternalForm());
-        bulletSprite = new Image(getClass().getResource("/se233/kellion/assets/Bullet_M3.png").toExternalForm());
+        bulletSprite = new Image(getClass().getResource("/se233/kellion/assets/Bullet_M3.gif").toExternalForm());
 
         ImageView v = super.getView();
         v.setImage(walkLeft);

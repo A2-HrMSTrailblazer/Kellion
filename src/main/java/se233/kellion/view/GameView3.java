@@ -13,11 +13,16 @@ import se233.kellion.util.Config;
 public class GameView3 extends GameView {
     private WritableImage bossFrame1;
     private WritableImage bossFrame2;
+    private Image chargeBulletSprite;
 
     public GameView3() {
         super();
-        Image bossBullet3 = new Image(getClass().getResource("/se233/kellion/assets/Bullet_M3.png").toExternalForm());
-        this.bossBulletSprite = new WritableImage(bossBullet3.getPixelReader(), 0, 0, 16, 16);
+
+        chargeBulletSprite = new Image(
+                getClass().getResource("/se233/kellion/assets/BulletBoss_2.gif").toExternalForm()
+        );
+
+        this.bossBulletSprite = new Image(getClass().getResource("/se233/kellion/assets/BulletBoss_3.gif").toExternalForm());
 
         Image kingSheet = new Image(getClass().getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
         int sheetW = (int) kingSheet.getWidth();
@@ -164,6 +169,7 @@ public class GameView3 extends GameView {
 
         boss1Defeated = true;
         scoreManager.applyStageClearBonuses(player);
+        se233.kellion.util.TotalScore.addStageScore(scoreManager.getScore());
 
         new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(javafx.util.Duration.millis(1000),
@@ -175,8 +181,8 @@ public class GameView3 extends GameView {
     protected void spawnMinionsForThisStage() {
         addMinion(MinionKind.M3, 400, 340, 400,  550);
         addMinion(MinionKind.M3, 450, 340, 450, 520);
-        addMinion(MinionKind.M3, 650, 340, 500, 690);
-        addMinion(MinionKind.M3, 720, 340, 550, 650);
+        addMinion(MinionKind.M3, 650, 340, 490, 590);
+        addMinion(MinionKind.M3, 720, 340, 550, 620);
     }
 
     @Override
@@ -202,5 +208,18 @@ public class GameView3 extends GameView {
         super.updateMinions(now);
     }
 
+    @Override
+    protected Runnable createPowerUpEffect() {
+        return () -> {
+            applyChargeMode();
+            setBulletSpriteImage(chargeBulletSprite);
+            markPowerUpCollected();
+            showPickupToast("Charge Shot!");
+        };
+    }
 
+    @Override
+    protected Image getChargeSprite() {
+        return chargeBulletSprite;
+    }
 }

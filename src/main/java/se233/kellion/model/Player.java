@@ -86,7 +86,7 @@ public class Player {
 
         jumpAnimation = new SpriteAnimation(
                 view,
-                Duration.millis(600),
+                Duration.millis(100),
                 JUMP_FRAME_COUNT,
                 COLUMNS,
                 JUMP_OFFSET_X,
@@ -94,7 +94,7 @@ public class Player {
                 FRAME_WIDTH,
                 FRAME_HEIGHT);
         jumpAnimation.setCycleCount(1);
-        jumpAnimation.setOnFinished(_ -> {
+        jumpAnimation.setOnFinished(e -> {
             isJumping = false;
             resetToIdle();
         });

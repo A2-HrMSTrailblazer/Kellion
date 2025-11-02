@@ -10,11 +10,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import se233.kellion.util.TotalScore;
 
 public class GameWinMenu {
     private final int width, height;
     private final StackPane overlay;
     private Runnable onEnd = () -> {};
+    private javafx.scene.text.Text totalText;
 
     public GameWinMenu(int width, int height) {
         this.width = width;
@@ -35,14 +37,25 @@ public class GameWinMenu {
         bg.setPreserveRatio(true);
 
         Image endImg = new Image(getClass().getResource("/se233/kellion/assets/END.png").toExternalForm());
-
+        Image endHavor = new Image(getClass().getResource("/se233/kellion/assets/END_2.png").toExternalForm());
         ImageView end = new ImageView(endImg);
-        end.setPreserveRatio(true);
-        end.setFitWidth(240);
+
+        end.setOnMouseEntered(e -> end.setImage(endHavor));
+        end.setOnMouseExited (e -> end.setImage(endImg));
+
+        end.setOnMousePressed(e -> end.setTranslateY(end.getTranslateY() + 1));
+        end.setOnMouseReleased(e -> end.setTranslateY(end.getTranslateY() - 1));
+        ;
         end.setCursor(javafx.scene.Cursor.HAND);
         end.setOnMouseClicked(e -> onEnd.run());
 
-        VBox buttons = new VBox(16, end);
+        totalText = new javafx.scene.text.Text("Total Score: 0");
+        totalText.setFill(Color.WHITE);
+        totalText.setStyle("-fx-font-size: 28; -fx-font-weight: bold;");
+        totalText.setStroke(Color.BLACK);
+        totalText.setStrokeWidth(2);
+
+        VBox buttons = new VBox(16, totalText,end);
         buttons.setAlignment(Pos.CENTER);
         buttons.setPadding(new Insets(24,12,12,12));
 
@@ -69,5 +82,9 @@ public class GameWinMenu {
         overlay.setVisible(false);
         overlay.setMouseTransparent(true);
         if (gameLayer != null) gameLayer.setDisable(false);
+    }
+
+    public void setTotalScore(int total) {
+        if (totalText != null) totalText.setText("Total Score: " + total);
     }
 }

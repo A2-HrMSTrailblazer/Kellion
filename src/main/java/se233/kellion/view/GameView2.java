@@ -14,12 +14,15 @@ import se233.kellion.util.Config;
 public class GameView2 extends GameView {
     private WritableImage bossFrame1;
     private WritableImage bossFrame2;
+    private Image rapidBulletSprite;
 
     public GameView2() {
         super();
 
-        Image bossBullet2 = new Image(getClass().getResource("/se233/kellion/assets/Bullet_M2.png").toExternalForm());
-        this.bossBulletSprite = new WritableImage(bossBullet2.getPixelReader(), 0, 0, 16, 16);
+        rapidBulletSprite = new Image(
+                getClass().getResource("/se233/kellion/assets/BulletBoss_1.gif").toExternalForm()
+        );
+        this.bossBulletSprite = new Image(getClass().getResource("/se233/kellion/assets/BulletBoss_2.gif").toExternalForm());
 
         Image javaSheet = new Image(getClass().getResource("/se233/kellion/assets/Java.png").toExternalForm());
         int sheetW = (int) javaSheet.getWidth();
@@ -123,17 +126,21 @@ public class GameView2 extends GameView {
         boss.getView().setY(boss.getView().getY() - 25);
         player.getView().toFront();
 
+        removeBossHpBar();
         boss1Defeated = true;
         scoreManager.applyStageClearBonuses(player);
+        se233.kellion.util.TotalScore.addStageScore(scoreManager.getScore());
     }
 
     @Override
     public void updateBoss() {
         if (!bossSpawned || boss == null) {
+            updateBossHpBar();
             checkLevelTransition();
             return;
         }
         if (boss.isDead()) {
+            updateBossHpBar();
             checkLevelTransition();
             return;
         }
@@ -148,10 +155,10 @@ public class GameView2 extends GameView {
             Bounds p = player.getHitboxBounds();
             double tx = p.getMinX() + p.getWidth() / 2.0;
             double ty = p.getMinY() + p.getHeight();
-            double s  = Config.BOSS_BULLET_SPEED + 0.5;
+            double s  = Config.BOSS_BULLET_SPEED +0.3;
 
             double baseAngle = Math.atan2(ty - bulletY, tx - bulletX);
-            double[] offsetsDeg = { -18, -6, 6, 18 };
+            double[] offsetsDeg = { -20, -4, 10};
             double range = 1200.0;
 
             for (double deg : offsetsDeg) {
@@ -161,15 +168,14 @@ public class GameView2 extends GameView {
                 fireBossBulletAimed(bulletX, bulletY, tx2, ty2, s);
             }
 
-            Timeline revert = new Timeline(new KeyFrame(Duration.millis(400),
+            Timeline revert = new Timeline(new KeyFrame(Duration.millis(50),
                     e -> { if (boss != null && !boss.isDead()) boss.getView().setImage(bossFrame1); }));
             revert.play();
 
             bossFireCounter = 0;
         }
-
+        updateBossHpBar();
         if (DEBUG_MODE) updateAllHitboxes();
-
         checkLevelTransition();
     }
 
@@ -177,8 +183,8 @@ public class GameView2 extends GameView {
     protected void spawnMinionsForThisStage() {
         addMinion(MinionKind.M2, 500, 340, 500,  550);
         addMinion(MinionKind.M2, 450, 340, 450, 520);
-        addMinion(MinionKind.M2, 650, 340, 500, 720);
-        addMinion(MinionKind.M2, 720, 340, 600, 770);
+        addMinion(MinionKind.M2, 650, 340, 500, 570);
+        addMinion(MinionKind.M2, 720, 340, 400, 600);
     }
 
     @Override
@@ -192,6 +198,8 @@ public class GameView2 extends GameView {
         root.getChildren().add(boss.getView());
         boss.getView().toFront();
         player.getView().toFront();
+        createBossHpBar();
+        updateBossHpBar();
     }
 
     @Override
@@ -202,5 +210,15 @@ public class GameView2 extends GameView {
     @Override
     public void updateMinions(long now) {
         super.updateMinions(now);
+    }
+
+    @Override
+    protected Runnable createPowerUpEffect() {
+        return () -> {
+            applyRapidMode();
+            setBulletSpriteImage(rapidBulletSprite);
+            markPowerUpCollected();
+            showPickupToast("Rapid Fire!");
+        };
     }
 }

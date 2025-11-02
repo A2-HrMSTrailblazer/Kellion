@@ -11,12 +11,16 @@ public class GameController {
     private final Player player;
     private boolean left, right;
     private AnimationTimer gameLoop;
+    private boolean shooting;
+    private boolean running = false;
+    private boolean isPaused = false;
 
     public GameController(GameView view) {
         if (view == null || view.getPlayer() == null)
             throw new KellionInputException("GameView and Player cannot be null in GameController.");
         this.view = view;
         this.player = view.getPlayer();
+
     }
 
     public void attachInputHandlersToScene(Scene scene) {
@@ -26,7 +30,11 @@ public class GameController {
                     case LEFT, A -> left = true;
                     case RIGHT, D -> right = true;
                     case W, UP, SPACE -> player.jump();
-                    case J -> view.fireBullet(player.getGunX(), player.getGunY(), player.isFacingRight());
+                    case J -> {
+                        shooting = true;
+                        view.onFirePress(System.nanoTime());
+                    }
+
                     case DOWN, CONTROL -> player.prone();
                     default -> {}
                 }
@@ -40,6 +48,10 @@ public class GameController {
                 switch (e.getCode()) {
                     case LEFT, A -> left = false;
                     case RIGHT, D -> right = false;
+                    case J -> {
+                        shooting = false;
+                        view.onFireRelease(System.nanoTime());
+                    }
                     case DOWN, CONTROL -> player.standUp();
                     default -> {}
                 }
@@ -50,7 +62,9 @@ public class GameController {
     }
 
     public void startGameLoop() {
-        if (gameLoop != null) return;
+        if (running) return;
+        running = true;
+        isPaused = false;
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -67,11 +81,24 @@ public class GameController {
     }
 
     public void stopGameLoop() {
-        if (gameLoop != null) {
-            gameLoop.stop();
-            gameLoop = null;
-            System.out.println("Game loop stopped");
-        }
+        if (!running) return;
+        running = false;
+        if (gameLoop != null) gameLoop.stop();
+        gameLoop = null;
+    }
+
+    public void pauseGame() {
+        if (!running || isPaused) return;      // << กัน pause ซ้ำ
+        isPaused = true;
+        stopGameLoop();
+        view.setPaused(true);
+    }
+
+    public void resumeGame() {
+        if (running || !isPaused) return;      // << กัน resume ซ้ำ
+        view.setPaused(false);
+        isPaused = false;
+        startGameLoop();
     }
 
     private void update(long now) {
@@ -84,8 +111,13 @@ public class GameController {
                     player.moveRight();
                 else
                     player.stopMoving();
+                if (shooting) {
+                    view.tryFirePlayerBullet(now);
+                }
             }
 
+            view.updateLivesHUD();
+            view.updateChargingVisual(now);
             view.updateMinions(now);
             view.updateBullets();
             view.updateBossBullets();

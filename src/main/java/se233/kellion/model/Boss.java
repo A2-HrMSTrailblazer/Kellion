@@ -12,8 +12,10 @@ public class Boss {
 
     private final ImageView view;
     private int health;
+    private int maxHp;
+    private boolean paused = false;
 
-    public Boss(double x, double y, String spritePath) {
+    public Boss(double x, double y, String spritePath,int hp) {
         Image src = new Image(getClass().getResource(spritePath).toExternalForm());
         WritableImage bossSprite = new WritableImage(
                 src.getPixelReader(),
@@ -23,31 +25,38 @@ public class Boss {
         view = new ImageView(bossSprite);
         view.setX(x);
         view.setY(y);
-        health = 200;
+        setHealthFull(hp);
     }
 
     public static Boss JavaBoss(double x, double y) {
         Image src = new Image(Boss.class.getResource("/se233/kellion/assets/Java.png").toExternalForm());
         WritableImage frame = new WritableImage(src.getPixelReader(), 0, 0, 112, 113);
-        Boss boss = new Boss(x, y, frame);
-        boss.health = 250;
-        return boss;
+        return new Boss(x, y, frame, 500);
     }
 
     public static Boss GomeramosKingBoss(double x, double y) {
         Image src = new Image(Boss.class.getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
         WritableImage frame = new WritableImage(src.getPixelReader(), 0, 0, 88, 144);
-        Boss boss = new Boss(x, y, frame);
-        boss.health = 300;
-        return boss;
+        return new Boss(x, y, frame, 500);
     }
 
-    private Boss(double x, double y, WritableImage croppedFrame) {
-        view = new ImageView(croppedFrame);
-        view.setX(x);
-        view.setY(y);
-        health = 200;
+    private Boss(double x, double y, WritableImage croppedFrame, int hp) {
+        this.view = new ImageView(croppedFrame);
+        this.view.setX(x);
+        this.view.setY(y);
+        setHealthFull(hp);
     }
+
+    private void setHealthFull(int hp) {
+        this.maxHp = Math.max(1, hp);
+        this.health = this.maxHp;
+    }
+
+    public void setPaused(boolean value) {
+        this.paused = value;
+    }
+
+    public boolean isPaused() { return paused;}
 
     public ImageView getView() {
         return view;
@@ -57,9 +66,9 @@ public class Boss {
         return view.getBoundsInParent();
     }
 
-    public int getHealth() {
-        return health;
-    }
+    public int getHp() { return health; }
+
+    public int getMaxHp() { return maxHp; }
 
     public void damage(int amount) {
         health -= amount;

@@ -15,28 +15,28 @@ public final class MinionConfig {
 
     public static MinionConfig defaultM1() {
         return new MinionConfig(
-                3,            // hp
+                10,            // hp
                 1.5,          // speed
                 260,          // detect range
-                1500_000_000L  // 1.5s
+                1200_000_000L  // 1.2s
         );
     }
 
     public static MinionConfig defaultM2() {
         return new MinionConfig(
-                5,            // hp
+                10,            // hp
                 1.5,          // speed
                 260,          // detect range
-                1500_000_000L  // 1.5s
+                1200_000_000L  // 1.2s
         );
     }
 
     public static MinionConfig defaultM3() {
         return new MinionConfig(
-                5,            // hp
+                10,            // hp
                 1.5,          // speed
                 260,          // detect range
-                1500_000_000L  // 1.5s
+                1200_000_000L  // 1.2s
         );
     }
 }

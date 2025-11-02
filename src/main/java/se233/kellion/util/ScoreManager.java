@@ -62,4 +62,5 @@ public class ScoreManager {
 
     /** อัปเดตข้อความคะแนนบนหน้าจอ */
     private void updateScoreText() { scoreText.setText("Score: " + score); }
+
 }
