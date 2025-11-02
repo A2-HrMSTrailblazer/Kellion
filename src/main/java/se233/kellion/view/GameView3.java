@@ -6,6 +6,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.util.Duration;
+import se233.kellion.model.Boss;
+import se233.kellion.model.MinionKind;
+import se233.kellion.util.Config;
 
 public class GameView3 extends GameView {
     private WritableImage bossFrame1;
@@ -13,7 +16,9 @@ public class GameView3 extends GameView {
 
     public GameView3() {
         super();
-        // Boss unique animation frames (after super so boss exists!)
+        Image bossBullet3 = new Image(getClass().getResource("/se233/kellion/assets/Bullet_M3.png").toExternalForm());
+        this.bossBulletSprite = new WritableImage(bossBullet3.getPixelReader(), 0, 0, 16, 16);
+
         Image kingSheet = new Image(getClass().getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
         int sheetW = (int) kingSheet.getWidth();
         int sheetH = (int) kingSheet.getHeight();
@@ -21,9 +26,6 @@ public class GameView3 extends GameView {
         int FRAME_W = sheetW / frames, FRAME_H = sheetH;
         bossFrame1 = new WritableImage(kingSheet.getPixelReader(), 0, 0, FRAME_W, FRAME_H);
         bossFrame2 = new WritableImage(kingSheet.getPixelReader(), 88, 0, FRAME_W, FRAME_H);
-
-        boss.getView().setImage(bossFrame1);
-        boss.getView().setY(boss.getView().getY() - 30);
     }
 
     @Override
@@ -111,7 +113,11 @@ public class GameView3 extends GameView {
 
     @Override
     public void updateBoss() {
-        if (boss == null || boss.isDead()) {
+        if (!bossSpawned || boss == null) {
+            checkLevelTransition();
+            return;
+        }
+        if (boss.isDead()) {
             checkLevelTransition();
             return;
         }
@@ -158,5 +164,43 @@ public class GameView3 extends GameView {
 
         boss1Defeated = true;
         scoreManager.applyStageClearBonuses(player);
+
+        new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(1000),
+                        e -> { if (onGameWin != null) onGameWin.run(); })
+        ).play();
     }
+
+    @Override
+    protected void spawnMinionsForThisStage() {
+        addMinion(MinionKind.M3, 400, 340, 400,  550);
+        addMinion(MinionKind.M3, 450, 340, 450, 520);
+        addMinion(MinionKind.M3, 650, 340, 500, 690);
+        addMinion(MinionKind.M3, 720, 340, 550, 650);
+    }
+
+    @Override
+    protected void spawnBoss() {
+        int groundY = 368;
+        double bossX = Config.WINDOW_WIDTH - Boss.SPRITE_WIDTH - 55;
+        double bossY = groundY + 15 - Boss.SPRITE_HEIGHT -80;
+        boss = Boss.GomeramosKingBoss(bossX, bossY);
+        boss.getView().setScaleX(2);
+        boss.getView().setScaleY(2);
+        root.getChildren().add(boss.getView());
+        boss.getView().toFront();
+        player.getView().toFront();
+    }
+
+    @Override
+    protected void addMinion(MinionKind kind, double x, double y, double L, double R) {
+        super.addMinion(kind, x, y, L, R);
+    }
+
+    @Override
+    public void updateMinions(long now) {
+        super.updateMinions(now);
+    }
+
+
 }

@@ -2,6 +2,7 @@ package se233.kellion.util;
 
 import javafx.scene.text.Text;
 import se233.kellion.model.Player;
+import se233.kellion.model.MinionKind;
 
 public class ScoreManager {
     private int score = 0;
@@ -20,13 +21,33 @@ public class ScoreManager {
         updateScoreText();
     }
 
+    /** เพิ่มคะแนนเมื่อยิงโดน (แต่ไม่ตาย) */
     public void addHit() {
         score += SCORE_PER_HIT;
         updateScoreText();
     }
-    public void addShot() {
-        shotsFired++;
+
+    /** เพิ่มจำนวนการยิง */
+    public void addShot() { shotsFired++; }
+
+    /** เพิ่มคะแนนเมื่อฆ่า Minion ได้ */
+    public void addMinionKill(MinionKind kind) {
+        int pts = switch (kind) {
+            case M1, M2 -> 1;
+            case M3 -> 2;
+            default -> 1;
+        };
+        score += pts;
+        updateScoreText();
     }
+
+    /** เพิ่มคะแนนเมื่อฆ่าบอสได้ */
+    public void addBossKill() {
+        score += 2;
+        updateScoreText();
+    }
+
+    /** เพิ่มโบนัสเมื่อจบด่าน */
     public void applyStageClearBonuses(Player player) {
         long elapsedMillis = System.currentTimeMillis() - stageStartTimeMillis;
         int elapsedSeconds = (int) (elapsedMillis / 1000);
@@ -35,6 +56,10 @@ public class ScoreManager {
         score += timeBonus + livesBonus;
         updateScoreText();
     }
+
+    /** ดึงคะแนนรวม */
     public int getScore() { return score; }
+
+    /** อัปเดตข้อความคะแนนบนหน้าจอ */
     private void updateScoreText() { scoreText.setText("Score: " + score); }
 }

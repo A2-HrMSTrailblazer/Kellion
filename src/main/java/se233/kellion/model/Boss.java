@@ -7,7 +7,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 
 public class Boss {
-    public static final int SPRITE_WIDTH = 112;
+    public static final int SPRITE_WIDTH = 122;
     public static final int SPRITE_HEIGHT = 160;
 
     private final ImageView view;
@@ -23,7 +23,30 @@ public class Boss {
         view = new ImageView(bossSprite);
         view.setX(x);
         view.setY(y);
-        health = 100;
+        health = 200;
+    }
+
+    public static Boss JavaBoss(double x, double y) {
+        Image src = new Image(Boss.class.getResource("/se233/kellion/assets/Java.png").toExternalForm());
+        WritableImage frame = new WritableImage(src.getPixelReader(), 0, 0, 112, 113);
+        Boss boss = new Boss(x, y, frame);
+        boss.health = 250;
+        return boss;
+    }
+
+    public static Boss GomeramosKingBoss(double x, double y) {
+        Image src = new Image(Boss.class.getResource("/se233/kellion/assets/Gomeramos_King.png").toExternalForm());
+        WritableImage frame = new WritableImage(src.getPixelReader(), 0, 0, 88, 144);
+        Boss boss = new Boss(x, y, frame);
+        boss.health = 300;
+        return boss;
+    }
+
+    private Boss(double x, double y, WritableImage croppedFrame) {
+        view = new ImageView(croppedFrame);
+        view.setX(x);
+        view.setY(y);
+        health = 200;
     }
 
     public ImageView getView() {

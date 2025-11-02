@@ -55,7 +55,7 @@ public class GameController {
             @Override
             public void handle(long now) {
                 try {
-                    update();
+                    update(now);
                 } catch (Exception ex) {
                     KellionExceptionHandler.handle(new KellionGameLoopException("Game loop failure", ex));
                     stopGameLoop(); // Optionally halt the game on fatal errors
@@ -74,7 +74,7 @@ public class GameController {
         }
     }
 
-    private void update() {
+    private void update(long now) {
         try {
             if (!view.isPlayerDead()) {
                 player.update();
@@ -86,6 +86,7 @@ public class GameController {
                     player.stopMoving();
             }
 
+            view.updateMinions(now);
             view.updateBullets();
             view.updateBossBullets();
             view.checkCollisions();
