@@ -86,7 +86,7 @@ public class Player {
 
         jumpAnimation = new SpriteAnimation(
                 view,
-                Duration.millis(100),
+                Duration.millis(400),
                 JUMP_FRAME_COUNT,
                 COLUMNS,
                 JUMP_OFFSET_X,
