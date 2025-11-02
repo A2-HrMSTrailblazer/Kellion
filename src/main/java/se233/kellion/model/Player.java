@@ -1,5 +1,8 @@
 package se233.kellion.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javafx.animation.Animation;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
@@ -9,6 +12,8 @@ import javafx.util.Duration;
 import se233.kellion.util.SpriteAnimation;
 
 public class Player {
+    private static final Logger moveLogger = LogManager.getLogger("player.movement");
+
     private final ImageView view;
     private final SpriteAnimation walkAnimation;
     private final SpriteAnimation jumpAnimation;
@@ -148,6 +153,7 @@ public class Player {
         startWalking();
         if (view.getX() > 0) {
             view.setX(view.getX() - SPEED);
+            moveLogger.info("moveLeft to {},{}", getX(), getY());
         }
     }
 
@@ -160,6 +166,7 @@ public class Player {
         startWalking();
         if (view.getX() + view.getFitWidth() < 800) {
             view.setX(view.getX() + SPEED);
+            moveLogger.info("moveRight to {},{}", getX(), getY());
         }
     }
 
@@ -186,6 +193,7 @@ public class Player {
             isJumping = true;
             velocityY = JUMP_STRENGTH;
             jumpAnimation.playFromStart();
+            moveLogger.info("jump at {},{}", getX(), getY());
         }
     }
 
@@ -218,6 +226,7 @@ public class Player {
         walkAnimation.stop();
         jumpAnimation.stop();
         proneAnimation.play();
+        moveLogger.info("prone at {},{}", getX(), getY());
     }
 
     public void standUp() {
@@ -272,4 +281,16 @@ public class Player {
         lives = l;
     }
 
+    public double getX() {
+        return view.getX();
+    }
+
+    public double getY() {
+        return view.getY();
+    }
+
+    // === SHOOT logging ===
+    public void logShootAction() {
+        moveLogger.info("shoot at {},{}", getX(), getY());
+    }
 }
