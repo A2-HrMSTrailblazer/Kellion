@@ -289,6 +289,10 @@ public class Player {
         return view.getY();
     }
 
+    public boolean isProne() {
+        return isProne;
+    }
+
     // === SHOOT logging ===
     public void logShootAction() {
         moveLogger.info("shoot at {},{}", getX(), getY());
